@@ -1,4 +1,8 @@
-from pydantic import BaseModel, ConfigDict, Field
+import logging
+
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+logger = logging.getLogger(__name__)
 
 
 class ApiModel(BaseModel):
@@ -6,6 +10,23 @@ class ApiModel(BaseModel):
         populate_by_name=True,
         extra="ignore",
     )
+
+
+class UnimplementedApiModel(ApiModel):
+    model_config = ConfigDict(
+        extra="allow",
+    )
+
+    @model_validator(mode="before")
+    @classmethod
+    def _log_unimplemented(cls, data):
+        if isinstance(data, dict):
+            keys = list(data.keys())
+            logger.warning(
+                f"Model {cls.__name__} is unimplemented. Received keys: {keys}. "
+                "Add these fields to the model if needed."
+            )
+        return data
 
 
 class PageInfo(ApiModel):

@@ -31,7 +31,7 @@ class UserProfile(ApiModel):
     role: UserType = Field(..., alias="role")
     avatar_url: str | None = Field(None, alias="avatarURL")
     is_online: bool | None = Field(None, alias="isOnline")
-    is_blocked: bool = Field(..., alias="isBlocked")
+    is_blocked: bool = Field(False, alias="isBlocked")
     rating: float | None = Field(None, alias="rating")
     reviews_count: int | None = Field(
         None,

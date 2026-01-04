@@ -1,6 +1,8 @@
 from collections.abc import Iterable
 from typing import Any
 
+from .exceptions import GraphQLError
+
 
 def _dig(obj: dict[str, Any], path: Iterable[str]) -> Any:
     cur: Any = obj
@@ -14,4 +16,4 @@ def _dig(obj: dict[str, Any], path: Iterable[str]) -> Any:
 def _raise_on_gql_errors(payload: dict[str, Any]) -> None:
     errors = payload.get("errors")
     if errors:
-        raise RuntimeError(f"GraphQL errors: {errors}")
+        raise GraphQLError(errors)

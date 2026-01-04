@@ -4,3 +4,7 @@ class CloudflareDetected(Exception):
 
 class Unauthorized(Exception):
     pass
+
+
+class GraphQLError(Exception):
+    pass

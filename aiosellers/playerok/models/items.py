@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Any
 
 from pydantic import Field, model_validator
 
@@ -7,10 +8,32 @@ from .account import UserProfile
 from .basic import File
 
 
+class ItemPriorityStatusPriceRange(ApiModel):
+    min: int = Field(..., alias="min")
+    max: int = Field(..., alias="max")
+
+
+class ItemPriorityStatus(ApiModel):
+    id: str = Field(..., alias="id")
+    price: int = Field(..., alias="price")
+    name: str = Field(..., alias="name")
+    type: PriorityTypes = Field(..., alias="type")
+    period: int = Field(..., alias="period")
+    price_range: ItemPriorityStatusPriceRange = Field(..., alias="priceRange")
+
+
+class ItemLog(ApiModel):
+    id: str = Field(..., alias="id")
+    event: str = Field(..., alias="event")  # Using str since ItemLogEvents might be missing some
+    created_at: datetime = Field(..., alias="createdAt")
+    user: UserProfile | None = Field(None, alias="user")
+
+
 class Item(ApiModel):
     id: str = Field(..., alias="id")
     slug: str = Field(..., alias="slug")
     name: str = Field(..., alias="name")
+    description: str | None = Field(None, alias="description")
     price: int = Field(..., alias="price")
     raw_price: int = Field(..., alias="rawPrice")
 
@@ -19,13 +42,34 @@ class Item(ApiModel):
     seller_type: UserType | None = Field(None, alias="sellerType")
 
     attachment: File | None = Field(None, alias="attachment")
+    attachments: list[File] | None = Field(None, alias="attachments")
     user: UserProfile | None = Field(None, alias="user")
+
+    attributes: dict[str, Any] | None = Field(None, alias="attributes")
+    comment: str | None = Field(None, alias="comment")
 
     approval_date: datetime | None = Field(None, alias="approvalDate")
     priority_position: int | None = Field(None, alias="priorityPosition")
     views_counter: int | None = Field(None, alias="viewsCounter")
     fee_multiplier: float | None = Field(None, alias="feeMultiplier")
     created_at: datetime | None = Field(None, alias="createdAt")
+    updated_at: datetime | None = Field(None, alias="updatedAt")
+    deleted_at: datetime | None = Field(None, alias="deletedAt")
+
+
+class MyItem(Item):
+    prev_price: int | None = Field(None, alias="prevPrice")
+    prev_fee_multiplier: float | None = Field(None, alias="prevFeeMultiplier")
+    seller_notified_about_fee_change: bool | None = Field(
+        None, alias="sellerNotifiedAboutFeeChange"
+    )
+    priority_price: int | None = Field(None, alias="priorityPrice")
+    sequence: int | None = Field(None, alias="sequence")
+    status_expiration_date: datetime | None = Field(None, alias="statusExpirationDate")
+    status_description: str | None = Field(None, alias="statusDescription")
+    status_payment: Any | None = Field(None, alias="statusPayment")  # Transaction
+    is_editable: bool | None = Field(None, alias="isEditable")
+    buyer: UserProfile | None = Field(None, alias="buyer")
 
 
 class ItemList(ApiModel):

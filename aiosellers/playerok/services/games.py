@@ -1,6 +1,6 @@
 from ..core import PlayerokClient, _dig, _raise_on_gql_errors
 from ..graphql import GraphQLQuery as GQL
-from ..models import Game, GameList, GameType, GameCategoryInstructionTypes
+from ..models import Game, GameCategoryInstructionTypes, GameList, GameType
 from ..models.games import (
     GameCategory,
     GameCategoryAgreementList,
