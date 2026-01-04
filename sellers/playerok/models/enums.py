@@ -171,6 +171,14 @@ class SortDirections(StrEnum):
     ASC = "ASC"
 
 
+class ItemsSortOptions(StrEnum):
+    PRICE_ASC = "PRICE_ASC"
+    PRICE_DESC = "PRICE_DESC"
+    RATING_ASC = "RATING_ASC"
+    RATING_DESC = "RATING_DESC"
+    DEFAULT = "DEFAULT"
+
+
 class PriorityTypes(StrEnum):
     DEFAULT = "DEFAULT"
     PREMIUM = "PREMIUM"

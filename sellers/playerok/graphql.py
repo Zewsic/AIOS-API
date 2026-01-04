@@ -4,6 +4,7 @@ from .models import (
     GameCategoryDataFieldTypes,
     GameCategoryInstructionTypes,
     GameType,
+    ItemsSortOptions,
     QueryID,
 )
 
@@ -152,4 +153,70 @@ class GraphQLQuery:
                 },
             },
             sha256_hash=QueryID.game_category_data_fields.value,
+        )
+
+    @staticmethod
+    def get_items(
+        count: int = 24,
+        cursor: str | None = None,
+        game_id: str | None = None,
+        category_id: str | None = None,
+        minimal_price: int | None = None,
+        maximal_price: int | None = None,
+        has_discount: bool | None = None,
+        has_reviews: bool | None = None,
+        attributes: list[dict[str, str]] | None = None,
+        search: str | None = None,
+        sort: ItemsSortOptions | None = None,
+    ) -> dict[str, Any]:
+        filters = {
+            "gameId": game_id,
+            "gameCategoryId": category_id,
+            "status": ["APPROVED"],
+        }
+        sort_field = None
+
+        if minimal_price or maximal_price:
+            filters["price"] = {"min": minimal_price, "max": maximal_price}
+        if has_discount:
+            filters["hasDiscount"] = has_discount
+        if has_reviews:
+            filters["hasTestimonials"] = has_reviews
+        if attributes:
+            filters["attributes"] = attributes
+        if search:
+            filters["searchQuery"] = search
+        if sort:
+            if "PRICE" in sort:
+                field = "price"
+            else:
+                field = "userRating"
+            if "ASC" in sort:
+                direction = "ASC"
+            else:
+                direction = "DESC"
+
+            sort_field = {"field": field, "direction": direction}
+
+        return _persisted(
+            operation_name="items",
+            variables={
+                "pagination": {"first": count, "after": cursor},
+                "filter": filters,
+                "sort": sort_field,
+            },
+            sha256_hash=QueryID.items.value,
+        )
+
+    @staticmethod
+    def get_item(id: str | None = None, slug: str | None = None) -> dict[str, Any]:
+        return _persisted(
+            operation_name="item",
+            variables={
+                "id": id,
+                "slug": slug,
+                "hasSupportAccess": False,
+                "showForbiddenImage": True,
+            },
+            sha256_hash=QueryID.item.value,
         )

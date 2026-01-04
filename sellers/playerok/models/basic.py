@@ -18,5 +18,5 @@ class PageInfo(ApiModel):
 class File(ApiModel):
     id: str = Field(alias="id")
     url: str = Field(alias="url")
-    filename: str = Field(alias="filename")
-    mime: str = Field(alias="mime")
+    filename: str | None = Field(None, alias="filename")
+    mime: str | None = Field(None, alias="mime")
