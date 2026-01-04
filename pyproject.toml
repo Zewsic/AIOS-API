@@ -11,3 +11,24 @@ dependencies = [
     "ruff>=0.14.10",
     "wrapper-tls-requests>=1.1.9",
 ]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = [
+    "__pycache__",
+    ".venv",
+    "build",
+    "dist",
+]
+
+[tool.ruff.lint]
+# Keep linting minimal + style-oriented; formatting is handled by `ruff format`.
+select = ["E", "F", "I"]
+ignore = ["E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+skip-magic-trailing-comma = false

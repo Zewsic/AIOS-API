@@ -1,9 +1,7 @@
-from pydantic import BaseModel
-
-from ..core import PlayerokClient, _raise_on_gql_errors, _dig
+from ..core import PlayerokClient, _dig, _raise_on_gql_errors
 from ..core.exceptions import Unauthorized
 from ..graphql import GraphQLQuery as GQL
-from ..models import Account, UserProfile, AccountProfile
+from ..models import Account, AccountProfile, UserProfile
 
 
 class AccountService(PlayerokClient):
@@ -18,13 +16,10 @@ class AccountService(PlayerokClient):
 
         return Account(**data)
 
-    async def get_account(self, username: str | None = None) -> AccountProfile:
+    async def get_account(self, username: str | None = None) -> AccountProfile | None:
         if username is None:
             raise ValueError("Can't get account with no username")
-        response = await self.request(
-            "post", "graphql", GQL.get_user(username=username)
-        )
-
+        response = await self.request("post", "graphql", GQL.get_user(username=username))
         raw = response.json()
         _raise_on_gql_errors(raw)
 
@@ -32,19 +27,16 @@ class AccountService(PlayerokClient):
         if data.get("__typename") == "User":
             profile = data
         else:
-            profile = None
+            return None
 
         return AccountProfile(**profile)
 
     async def get_user(
         self, username: str | None = None, id: str | None = None
-    ) -> UserProfile:
+    ) -> UserProfile | None:
         if username is None and id is None:
             raise ValueError("Can't get user with no username or id")
-        response = await self.request(
-            "post", "graphql", GQL.get_user(username=username, id=id)
-        )
-
+        response = await self.request("post", "graphql", GQL.get_user(username=username, id=id))
         raw = response.json()
         _raise_on_gql_errors(raw)
 
@@ -54,6 +46,6 @@ class AccountService(PlayerokClient):
         elif data.get("__typename") == "User":
             profile = data.get("profile")
         else:
-            profile = None
+            return None
 
         return UserProfile(**profile)

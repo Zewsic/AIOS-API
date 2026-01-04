@@ -1,11 +1,10 @@
-import json
 from typing import Any
 
 from .models import (
-    QueryID,
-    GameType,
-    GameCategoryInstructionTypes,
     GameCategoryDataFieldTypes,
+    GameCategoryInstructionTypes,
+    GameType,
+    QueryID,
 )
 
 

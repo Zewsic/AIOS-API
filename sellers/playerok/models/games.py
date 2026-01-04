@@ -1,17 +1,16 @@
 from datetime import datetime
-from typing import Optional, List
 
 from pydantic import Field, model_validator
 
 from . import (
     ApiModel,
-    PageInfo,
-    GameCategoryDataFieldTypes,
-    GameCategoryDataFieldInputTypes,
-    GameCategoryOptionTypes,
     GameCategoryAgreementIconTypes,
     GameCategoryAutoConfirmPeriods,
+    GameCategoryDataFieldInputTypes,
+    GameCategoryDataFieldTypes,
+    GameCategoryOptionTypes,
     GameType,
+    PageInfo,
 )
 from .basic import File
 
@@ -27,11 +26,11 @@ class GameCategoryDataField(ApiModel):
     hidden: bool = Field(..., alias="hidden")
     required: bool = Field(..., alias="required")
 
-    value: Optional[str] = Field(None, alias="value")
+    value: str | None = Field(None, alias="value")
 
 
 class GameCategoryDataFieldList(ApiModel):
-    data_fields: List[GameCategoryDataField] = Field(..., alias="dataFields")
+    data_fields: list[GameCategoryDataField] = Field(..., alias="dataFields")
     page_info: PageInfo = Field(..., alias="pageInfo")
     total_count: int = Field(..., alias="totalCount")
 
@@ -66,7 +65,7 @@ class GameCategoryOption(ApiModel):
     type: GameCategoryOptionTypes = Field(..., alias="type")
     field: str = Field(..., alias="field")
     value: str = Field(..., alias="value")
-    value_range_limit: Optional[int] = Field(None, alias="valueRangeLimit")
+    value_range_limit: int | None = Field(None, alias="valueRangeLimit")
 
 
 class GameCategoryAgreement(ApiModel):
@@ -77,7 +76,7 @@ class GameCategoryAgreement(ApiModel):
 
 
 class GameCategoryAgreementList(ApiModel):
-    agreements: List[GameCategoryAgreement] = Field(..., alias="agreements")
+    agreements: list[GameCategoryAgreement] = Field(..., alias="agreements")
     page_info: PageInfo = Field(..., alias="pageInfo")
     total_count: int = Field(..., alias="totalCount")
 
@@ -102,20 +101,18 @@ class GameCategoryObtainingType(ApiModel):
 
     game_category_id: str = Field(..., alias="gameCategoryId")
     no_comment_from_buyer: bool = Field(..., alias="noCommentFromBuyer")
-    instruction_for_buyer: Optional[str] = Field(None, alias="instructionForBuyer")
-    instruction_for_seller: Optional[str] = Field(None, alias="instructionForSeller")
+    instruction_for_buyer: str | None = Field(None, alias="instructionForBuyer")
+    instruction_for_seller: str | None = Field(None, alias="instructionForSeller")
 
     sequence: int = Field(..., alias="sequence")
-    fee_multiplier: Optional[float] = Field(None, alias="feeMultiplier")
+    fee_multiplier: float | None = Field(None, alias="feeMultiplier")
 
-    agreements: List[GameCategoryAgreement] = Field(..., alias="agreements")
-    props: Optional[GameCategoryProps] = Field(None, alias="props")
+    agreements: list[GameCategoryAgreement] = Field(..., alias="agreements")
+    props: GameCategoryProps | None = Field(None, alias="props")
 
 
 class GameCategoryObtainingTypeList(ApiModel):
-    obtaining_types: List[GameCategoryObtainingType] = Field(
-        ..., alias="obtainingTypes"
-    )
+    obtaining_types: list[GameCategoryObtainingType] = Field(..., alias="obtainingTypes")
     page_info: PageInfo = Field(..., alias="pageInfo")
     total_count: int = Field(..., alias="totalCount")
 
@@ -143,7 +140,7 @@ class GameCategoryInstruction(ApiModel):
 
 
 class GameCategoryInstructionList(ApiModel):
-    instructions: List[GameCategoryInstruction] = Field(..., alias="instructions")
+    instructions: list[GameCategoryInstruction] = Field(..., alias="instructions")
     page_info: PageInfo = Field(..., alias="pageInfo")
     total_count: int = Field(..., alias="totalCount")
 
@@ -166,26 +163,26 @@ class GameCategory(ApiModel):
     slug: str = Field(..., alias="slug")
     name: str = Field(..., alias="name")
 
-    category_id: Optional[str] = Field(None, alias="categoryId")
-    game_id: Optional[str] = Field(None, alias="gameId")
+    category_id: str | None = Field(None, alias="categoryId")
+    game_id: str | None = Field(None, alias="gameId")
 
-    obtaining: Optional[str] = Field(None, alias="obtaining")
+    obtaining: str | None = Field(None, alias="obtaining")
 
-    options: Optional[List[GameCategoryOption]] = Field(None, alias="options")
-    props: Optional[GameCategoryProps] = Field(None, alias="props")
+    options: list[GameCategoryOption] | None = Field(None, alias="options")
+    props: GameCategoryProps | None = Field(None, alias="props")
 
-    no_comment_from_buyer: Optional[bool] = Field(None, alias="noCommentFromBuyer")
-    instruction_for_buyer: Optional[str] = Field(None, alias="instructionForBuyer")
-    instruction_for_seller: Optional[str] = Field(None, alias="instructionForSeller")
+    no_comment_from_buyer: bool | None = Field(None, alias="noCommentFromBuyer")
+    instruction_for_buyer: str | None = Field(None, alias="instructionForBuyer")
+    instruction_for_seller: str | None = Field(None, alias="instructionForSeller")
 
-    use_custom_obtaining: Optional[bool] = Field(None, alias="useCustomObtaining")
-    auto_confirm_period: Optional[GameCategoryAutoConfirmPeriods] = Field(
+    use_custom_obtaining: bool | None = Field(None, alias="useCustomObtaining")
+    auto_confirm_period: GameCategoryAutoConfirmPeriods | None = Field(
         None, alias="autoConfirmPeriod"
     )
-    auto_moderation_mode: Optional[bool] = Field(None, alias="autoModerationMode")
+    auto_moderation_mode: bool | None = Field(None, alias="autoModerationMode")
 
-    agreements: Optional[List[GameCategoryAgreement]] = Field(None, alias="agreements")
-    fee_multiplier: Optional[float] = Field(None, alias="feeMultiplier")
+    agreements: list[GameCategoryAgreement] | None = Field(None, alias="agreements")
+    fee_multiplier: float | None = Field(None, alias="feeMultiplier")
 
 
 class Game(ApiModel):
@@ -196,9 +193,9 @@ class Game(ApiModel):
     type: GameType = Field(..., alias="type")
 
     logo: File = Field(..., alias="logo")
-    banner: Optional[File] = Field(None, alias="banner")
+    banner: File | None = Field(None, alias="banner")
 
-    categories: List[GameCategory] = Field(..., alias="categories")
+    categories: list[GameCategory] = Field(..., alias="categories")
     created_at: datetime = Field(..., alias="createdAt")
 
 
@@ -211,7 +208,7 @@ class GameProfile(ApiModel):
 
 
 class GameList(ApiModel):
-    games: List[Game] = Field(..., alias="games")
+    games: list[Game] = Field(..., alias="games")
     page_info: PageInfo = Field(..., alias="pageInfo")
     total_count: int = Field(..., alias="totalCount")
 
@@ -223,7 +220,5 @@ class GameList(ApiModel):
 
         if "games" not in data:
             edges = data.get("edges") or []
-            data["games"] = [
-                (edge or {}).get("node") for edge in edges if (edge or {}).get("node")
-            ]
+            data["games"] = [(edge or {}).get("node") for edge in edges if (edge or {}).get("node")]
         return data

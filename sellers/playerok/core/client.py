@@ -1,5 +1,5 @@
 import os
-from typing import Literal
+from typing import Any, Literal
 
 from tls_requests import AsyncClient, Response
 
@@ -9,9 +9,7 @@ from .exceptions import CloudflareDetected
 
 
 class PlayerokClient:
-    def __init__(
-        self, access_token: str | None = None, config: PlayerokConfig | None = None
-    ):
+    def __init__(self, access_token: str | None = None, config: PlayerokConfig | None = None):
         self._access_token = access_token or os.getenv("PLAYEROK_ACCESS_TOKEN")
         self._config = config or PlayerokConfig()
 
@@ -39,7 +37,7 @@ class PlayerokClient:
         payload: dict[str, str],
         *,
         headers: dict[str, str] | None = None,
-        files: dict | None = None,
+        files: dict[str, Any] | None = None,
     ) -> Response:
         request_headers = self._config.headers.copy()
         if headers is not None:
@@ -48,20 +46,19 @@ class PlayerokClient:
             url = self._config.base_url + url
 
         if method == "get":
-            response = await self._client.get(
-                url=url, headers=request_headers, params=payload
-            )
+            response = await self._client.get(url=url, headers=request_headers, params=payload)
         elif method == "post":
             if files:
                 response = await self._client.post(
                     url=url, headers=request_headers, data=payload, files=files
                 )
             else:
-                response = await self._client.post(
-                    url=url, headers=request_headers, json=payload
-                )
+                response = await self._client.post(url=url, headers=request_headers, json=payload)
         else:
             raise RuntimeError(f"Unsupported HTTP method: {method}")
 
         self._raise_if_cloudflare(response)
         return response
+
+    async def close(self):
+        await self._client.aclose()

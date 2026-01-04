@@ -1,6 +1,4 @@
-from typing import Optional
-
-from pydantic import ConfigDict, BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ApiModel(BaseModel):
@@ -11,10 +9,10 @@ class ApiModel(BaseModel):
 
 
 class PageInfo(ApiModel):
-    start_cursor: Optional[str] = Field(None, alias="startCursor")
-    end_cursor: Optional[str] = Field(None, alias="endCursor")
-    has_previous_page: Optional[bool] = Field(None, alias="hasPreviousPage")
-    has_next_page: Optional[bool] = Field(None, alias="hasNextPage")
+    start_cursor: str | None = Field(None, alias="startCursor")
+    end_cursor: str | None = Field(None, alias="endCursor")
+    has_previous_page: bool | None = Field(None, alias="hasPreviousPage")
+    has_next_page: bool | None = Field(None, alias="hasNextPage")
 
 
 class File(ApiModel):

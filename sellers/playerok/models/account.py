@@ -1,7 +1,7 @@
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
-from pydantic import BaseModel, Field, AliasChoices
+from pydantic import AliasChoices, Field
 
 from . import ApiModel, UserType
 
@@ -29,16 +29,16 @@ class UserProfile(ApiModel):
     id: str = Field(..., alias="id")
     username: str = Field(..., alias="username")
     role: UserType = Field(..., alias="role")
-    avatar_url: Optional[str] = Field(None, alias="avatarURL")
-    is_online: Optional[bool] = Field(None, alias="isOnline")
+    avatar_url: str | None = Field(None, alias="avatarURL")
+    is_online: bool | None = Field(None, alias="isOnline")
     is_blocked: bool = Field(..., alias="isBlocked")
-    rating: Optional[float] = Field(None, alias="rating")
-    reviews_count: Optional[int] = Field(
+    rating: float | None = Field(None, alias="rating")
+    reviews_count: int | None = Field(
         None,
         alias="reviewsCount",
         validation_alias=AliasChoices("reviewsCount", "testimonialCounter"),
     )
-    created_at: Optional[datetime] = Field(None, alias="createdAt")
+    created_at: datetime | None = Field(None, alias="createdAt")
 
 
 class AccountBalance(ApiModel):
@@ -80,7 +80,7 @@ class AccountProfile(UserProfile):
     balance: AccountBalance = Field(..., alias="balance")
     stats: AccountStats = Field(..., alias="stats")
     is_blocked_for: Any = Field(None, alias="isBlockedFor")
-    is_verified: Optional[bool] = Field(None, alias="isVerified")
+    is_verified: bool | None = Field(None, alias="isVerified")
     has_frozen_balance: bool = Field(..., alias="hasFrozenBalance")
     has_enabled_notifications: bool = Field(..., alias="hasEnabledNotifications")
     support_chat_id: str = Field(..., alias="supportChatId")
