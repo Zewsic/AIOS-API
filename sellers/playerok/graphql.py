@@ -1,6 +1,6 @@
 import json
 
-from ..models import QueryID
+from sellers.playerok.models import QueryID, GameType
 
 
 class GraphQLQuery:
@@ -17,5 +17,22 @@ class GraphQLQuery:
         return {
             "operationName": "user",
             "variables": {"id": id, "username": username, "hasSupportAccess": False},
-            "extensions": {"persistedQuery": {"version": 1, "sha256Hash": QueryID.user.value}}
+            "extensions": {
+                "persistedQuery": {"version": 1, "sha256Hash": QueryID.user.value}
+            },
+        }
+
+    @staticmethod
+    def get_games(
+        count: int = 24, type: GameType | None = None, cursor: str | None = None
+    ):
+        return {
+            "operationName": "games",
+            "variables": {
+                "pagination": {"first": count, "after": cursor},
+                "filter": {"type": type.name} if type else {},
+            },
+            "extensions": {
+                "persistedQuery": {"version": 1, "sha256Hash": QueryID.games.value}
+            },
         }

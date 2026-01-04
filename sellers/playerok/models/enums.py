@@ -1,4 +1,5 @@
-from enum import StrEnum
+import enum
+from enum import StrEnum, Enum, IntEnum
 
 
 class QueryID(StrEnum):
@@ -36,3 +37,180 @@ class QueryID(StrEnum):
         "ef7902598e855fa15fb5e3112156ac226180f0b009a36606fc80a18f00b80c63"
     )
     verified_cards = "eb338d8432981307a2b3d322b3310b2447cab3a6acf21aba4b8773b97e72d1aa"
+
+
+class GameType(StrEnum):
+    GAME = "GAME"
+    APPLICATION = "APPLICATION"
+
+
+class UserType(StrEnum):
+    USER = "USER"
+    MODERATOR = "MODERATOR"
+    BOT = "BOT"
+
+
+class GameCategoryDataFieldTypes(StrEnum):
+    ITEM_DATA = "ITEM_DATA"
+    OBTAINING_DATA = "OBTAINING_DATA"
+
+
+class EventTypes(StrEnum):
+    CHAT_INITIALIZED = "CHAT_INITIALIZED"
+    NEW_MESSAGE = "NEW_MESSAGE"
+    NEW_DEAL = "NEW_DEAL"
+    NEW_REVIEW = "NEW_REVIEW"
+    DEAL_CONFIRMED = "DEAL_CONFIRMED"
+    DEAL_CONFIRMED_AUTOMATICALLY = "DEAL_CONFIRMED_AUTOMATICALLY"
+    DEAL_ROLLED_BACK = "DEAL_ROLLED_BACK"
+    DEAL_HAS_PROBLEM = "DEAL_HAS_PROBLEM"
+    DEAL_PROBLEM_RESOLVED = "DEAL_PROBLEM_RESOLVED"
+    DEAL_STATUS_CHANGED = "DEAL_STATUS_CHANGED"
+    ITEM_PAID = "ITEM_PAID"
+    ITEM_SENT = "ITEM_SENT"
+
+
+class ItemLogEvents(StrEnum):
+    PAID = "PAID"
+    SENT = "SENT"
+    DEAL_CONFIRMED = "DEAL_CONFIRMED"
+    DEAL_ROLLED_BACK = "DEAL_ROLLED_BACK"
+    PROBLEM_REPORTED = "PROBLEM_REPORTED"
+    PROBLEM_RESOLVED = "PROBLEM_RESOLVED"
+
+
+class TransactionOperations(StrEnum):
+    DEPOSIT = "DEPOSIT"
+    BUY = "BUY"
+    SELL = "SELL"
+    ITEM_DEFAULT_PRIORITY = "ITEM_DEFAULT_PRIORITY"
+    ITEM_PREMIUM_PRIORITY = "ITEM_PREMIUM_PRIORITY"
+    WITHDRAW = "WITHDRAW"
+    MANUAL_BALANCE_INCREASE = "MANUAL_BALANCE_INCREASE"
+    MANUAL_BALANCE_DECREASE = "MANUAL_BALANCE_DECREASE"
+    REFERRAL_BONUS = "REFERRAL_BONUS"
+    STEAM_DEPOSIT = "STEAM_DEPOSIT"
+
+
+class TransactionDirections(StrEnum):
+    IN = "IN"
+    OUT = "OUT"
+
+
+class TransactionStatuses(StrEnum):
+    PENDING = "PENDING"
+    PROCESSING = "PROCESSING"
+    CONFIRMED = "CONFIRMED"
+    ROLLED_BACK = "ROLLED_BACK"
+    FAILED = "FAILED"
+
+
+class TransactionPaymentMethodIds(StrEnum):
+    MIR = "MIR"
+    VISA_MASTERCARD = "VISA_MASTERCARD"
+    ERIP = "ERIP"
+
+
+class TransactionProviderDirections(StrEnum):
+    IN = "IN"
+    OUT = "OUT"
+
+
+class TransactionProviderIds(StrEnum):
+    LOCAL = "LOCAL"
+    SBP = "SBP"
+    BANK_CARD_RU = "BANK_CARD_RU"
+    BANK_CARD_BY = "BANK_CARD_BY"
+    BANK_CARD = "BANK_CARD"
+    YMONEY = "YMONEY"
+    USDT = "USDT"
+    PENDING_INCOME = "PENDING_INCOME"
+
+
+class BankCardTypes(StrEnum):
+    MIR = "MIR"
+    VISA = "VISA"
+    MASTERCARD = "MASTERCARD"
+
+
+class ItemDealStatuses(StrEnum):
+    PAID = "PAID"
+    PENDING = "PENDING"
+    SENT = "SENT"
+    CONFIRMED = "CONFIRMED"
+    ROLLED_BACK = "ROLLED_BACK"
+
+
+class ItemDealDirections(StrEnum):
+    IN = "IN"
+    OUT = "OUT"
+
+
+class ChatTypes(StrEnum):
+    PM = "PM"
+    NOTIFICATIONS = "NOTIFICATIONS"
+    SUPPORT = "SUPPORT"
+
+
+class ChatStatuses(StrEnum):
+    NEW = "NEW"
+    FINISHED = "FINISHED"
+
+
+class ChatMessageButtonTypes(StrEnum):
+    # TODO: Add another types of buttons
+    REDIRECT = "REDIRECT"
+    LOTTERY = "LOTTERY"
+
+
+class ItemStatuses(StrEnum):
+    PENDING_APPROVAL = "PENDING_APPROVAL"
+    PENDING_MODERATION = "PENDING_MODERATION"
+    APPROVED = "APPROVED"
+    DECLINED = "DECLINED"
+    BLOCKED = "BLOCKED"
+    EXPIRED = "EXPIRED"
+    SOLD = "SOLD"
+    DRAFT = "DRAFT"
+
+
+class ReviewStatuses(StrEnum):
+    APPROVED = "APPROVED"
+    DELETED = "DELETED"
+
+
+class SortDirections(StrEnum):
+    DESC = "DESC"
+    ASC = "ASC"
+
+
+class PriorityTypes(StrEnum):
+    DEFAULT = "DEFAULT"
+    PREMIUM = "PREMIUM"
+
+
+class GameCategoryAgreementIconTypes(StrEnum):
+    # TODO: Add another types of icons
+    RESTRICTION = "RESTRICTION"
+    CONFIRMATION = "CONFIRMATION"
+
+
+class GameCategoryOptionTypes(StrEnum):
+    # TODO: Add another types of options
+    SELECTOR = "SELECTOR"
+    SWITCH = "SWITCH"
+
+
+class GameCategoryDataFieldInputTypes(StrEnum):
+    # TODO: Add all types
+    INPUT = "INPUT"
+
+
+class GameCategoryAutoConfirmPeriods(StrEnum):
+    # TODO: Add all confirm periods
+    SEVEN_DAYS = "SEVEN_DAYS"
+
+
+class GameCategoryInstructionTypes(StrEnum):
+    FOR_SELLER = "FOR_SELLER"
+    FOR_BUYER = "FOR_BUYER"

@@ -18,7 +18,9 @@ class AccountService(PlayerokClient):
     async def get_account(self, username: str | None = None) -> AccountProfile:
         if username is None:
             raise ValueError("Can't get account with no username")
-        response = await self.request("post", "graphql", GQL.get_user(username=username))
+        response = await self.request(
+            "post", "graphql", GQL.get_user(username=username)
+        )
 
         data = response.json()["data"]["user"]
         if data.get("__typename") == "User":
@@ -33,7 +35,9 @@ class AccountService(PlayerokClient):
     ) -> UserProfile:
         if username is None and id is None:
             raise ValueError("Can't get user with no username or id")
-        response = await self.request("post", "graphql", GQL.get_user(username=username, id=id))
+        response = await self.request(
+            "post", "graphql", GQL.get_user(username=username, id=id)
+        )
 
         data = response.json()["data"]["user"]
         if data.get("__typename") == "UserFragment":
@@ -44,5 +48,3 @@ class AccountService(PlayerokClient):
             profile = None
 
         return UserProfile(**profile)
-
-

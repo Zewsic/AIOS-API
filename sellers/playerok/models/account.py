@@ -3,12 +3,14 @@ from typing import Any, Optional
 
 from pydantic import BaseModel, Field, AliasChoices
 
+from . import ApiModel, UserType
 
-class Account(BaseModel):
+
+class Account(ApiModel):
     id: str = Field(..., alias="id")
     username: str = Field(..., alias="username")
     email: str = Field(..., alias="email")
-    role: str = Field(..., alias="role")
+    role: UserType = Field(..., alias="role")
     has_frozen_balance: bool = Field(..., alias="hasFrozenBalance")
     support_chat_id: str = Field(..., alias="supportChatId")
     system_chat_id: str = Field(..., alias="systemChatId")
@@ -23,19 +25,23 @@ class Account(BaseModel):
     chosen_verified_card: Any = Field(None, alias="chosenVerifiedCard")
 
 
-class UserProfile(BaseModel):
+class UserProfile(ApiModel):
     id: str = Field(..., alias="id")
     username: str = Field(..., alias="username")
-    role: str = Field(..., alias="role")
+    role: UserType = Field(..., alias="role")
     avatar_url: Optional[str] = Field(None, alias="avatarURL")
     is_online: Optional[bool] = Field(None, alias="isOnline")
     is_blocked: bool = Field(..., alias="isBlocked")
     rating: Optional[float] = Field(None, alias="rating")
-    reviews_count: Optional[int] = Field(None, alias="reviewsCount", validation_alias=AliasChoices("reviewsCount", "testimonialCounter"))
+    reviews_count: Optional[int] = Field(
+        None,
+        alias="reviewsCount",
+        validation_alias=AliasChoices("reviewsCount", "testimonialCounter"),
+    )
     created_at: Optional[datetime] = Field(None, alias="createdAt")
 
 
-class AccountBalance(BaseModel):
+class AccountBalance(ApiModel):
     id: str = Field(..., alias="id")
     value: float = Field(..., alias="value")
     available: float = Field(..., alias="available")
@@ -44,27 +50,27 @@ class AccountBalance(BaseModel):
     withdrawable: float = Field(..., alias="withdrawable")
 
 
-class AccountItemsStats(BaseModel):
+class AccountItemsStats(ApiModel):
     total: int = Field(..., alias="total")
     finished: int = Field(..., alias="finished")
 
 
-class AccountIncomingDealsStats(BaseModel):
+class AccountIncomingDealsStats(ApiModel):
     total: int = Field(..., alias="total")
     finished: int = Field(..., alias="finished")
 
 
-class AccountOutgoingDealsStats(BaseModel):
+class AccountOutgoingDealsStats(ApiModel):
     total: int = Field(..., alias="total")
     finished: int = Field(..., alias="finished")
 
 
-class AccountDealsStats(BaseModel):
+class AccountDealsStats(ApiModel):
     incoming: AccountIncomingDealsStats = Field(..., alias="incoming")
     outgoing: AccountOutgoingDealsStats = Field(..., alias="outgoing")
 
 
-class AccountStats(BaseModel):
+class AccountStats(ApiModel):
     items: AccountItemsStats = Field(..., alias="items")
     deals: AccountDealsStats = Field(..., alias="deals")
 
