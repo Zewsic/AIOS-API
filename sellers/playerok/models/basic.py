@@ -16,6 +16,7 @@ class PageInfo(ApiModel):
     has_previous_page: Optional[bool] = Field(None, alias="hasPreviousPage")
     has_next_page: Optional[bool] = Field(None, alias="hasNextPage")
 
+
 class File(ApiModel):
     id: str = Field(alias="id")
     url: str = Field(alias="url")

@@ -65,5 +65,5 @@ __all__ = [
     "GameCategoryAutoConfirmPeriods",
     "GameCategoryInstructionTypes",
     "Game",
-    "GameList"
+    "GameList",
 ]

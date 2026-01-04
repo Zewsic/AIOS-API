@@ -11,7 +11,7 @@ from . import (
     GameCategoryOptionTypes,
     GameCategoryAgreementIconTypes,
     GameCategoryAutoConfirmPeriods,
-    GameType
+    GameType,
 )
 from .basic import File
 
@@ -106,14 +106,16 @@ class GameCategoryObtainingType(ApiModel):
     instruction_for_seller: Optional[str] = Field(None, alias="instructionForSeller")
 
     sequence: int = Field(..., alias="sequence")
-    fee_multiplier: float = Field(..., alias="feeMultiplier")
+    fee_multiplier: Optional[float] = Field(None, alias="feeMultiplier")
 
     agreements: List[GameCategoryAgreement] = Field(..., alias="agreements")
-    props: GameCategoryProps = Field(..., alias="props")
+    props: Optional[GameCategoryProps] = Field(None, alias="props")
 
 
 class GameCategoryObtainingTypeList(ApiModel):
-    obtaining_types: List[GameCategoryObtainingType] = Field(..., alias="obtainingTypes")
+    obtaining_types: List[GameCategoryObtainingType] = Field(
+        ..., alias="obtainingTypes"
+    )
     page_info: PageInfo = Field(..., alias="pageInfo")
     total_count: int = Field(..., alias="totalCount")
 

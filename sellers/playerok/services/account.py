@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from ..core import PlayerokClient
+from ..core import PlayerokClient, _raise_on_gql_errors, _dig
 from ..core.exceptions import Unauthorized
 from ..graphql import GraphQLQuery as GQL
 from ..models import Account, UserProfile, AccountProfile
@@ -9,7 +9,10 @@ from ..models import Account, UserProfile, AccountProfile
 class AccountService(PlayerokClient):
     async def get_me(self) -> Account:
         response = await self.request("post", "graphql", GQL.get_me())
-        data: dict = response.json()["data"]["viewer"]
+        raw = response.json()
+        _raise_on_gql_errors(raw)
+
+        data = _dig(raw, ("data", "viewer"))
         if data is None:
             raise Unauthorized()
 
@@ -22,7 +25,10 @@ class AccountService(PlayerokClient):
             "post", "graphql", GQL.get_user(username=username)
         )
 
-        data = response.json()["data"]["user"]
+        raw = response.json()
+        _raise_on_gql_errors(raw)
+
+        data = _dig(raw, ("data", "user"))
         if data.get("__typename") == "User":
             profile = data
         else:
@@ -39,7 +45,10 @@ class AccountService(PlayerokClient):
             "post", "graphql", GQL.get_user(username=username, id=id)
         )
 
-        data = response.json()["data"]["user"]
+        raw = response.json()
+        _raise_on_gql_errors(raw)
+
+        data = _dig(raw, ("data", "user"))
         if data.get("__typename") == "UserFragment":
             profile = data
         elif data.get("__typename") == "User":
