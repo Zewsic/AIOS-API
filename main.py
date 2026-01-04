@@ -2,8 +2,7 @@ import asyncio
 
 from dotenv import load_dotenv
 
-from sellers.playerok.services.games import GamesService
-from sellers.playerok.services.items import ItemsService
+from aiosellers.playerok.services.items import ItemsService
 
 load_dotenv()
 
@@ -35,19 +34,15 @@ async def main():
     #     print(f"games p{_}:", games)
     #     cursor = games.page_info.end_cursor
 
-    service = GamesService()
-    game = await service.get_game(slug="roblox")
-    category = game.categories[0]
-
     service = ItemsService()
     items = await service.get_items(
-        count=2,
-        game_id=game.id,
-        category_id=category.id,
+        count=24,
+        game_id="1ecc48ce-4f1a-6531-300d-9faaa8c3ab04",
+        category_id="1ecc48ce-52e6-6010-c327-d8c26efee5e3",
+        attributes=[{"field": "server", "value": "steal-a-brainrot", "type": "SELECTOR"}],
     )
-    print("items:", items)
-    item = await service.get_item(id=items.items[0].id)
-    print("item:", item)
+    for item in items.items:
+        print(item.name, " — ", item.price, "RUB")
 
 
 if __name__ == "__main__":
