@@ -197,8 +197,9 @@ class GameCategoryOptionTypes(StrEnum):
 
 
 class GameCategoryDataFieldInputTypes(StrEnum):
-    # TODO: Add all types
+    # Maybe, another obtaining types can be exists
     INPUT = "INPUT"
+    TEXTAREA = "TEXTAREA"
 
 
 class GameCategoryAutoConfirmPeriods(StrEnum):

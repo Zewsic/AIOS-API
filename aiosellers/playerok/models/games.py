@@ -53,7 +53,7 @@ class GameCategoryDataFieldList(ApiModel):
 
 
 class GameCategoryProps(ApiModel):
-    min_reviews: int = Field(..., alias="minTestimonials")
+    min_reviews: int | None = Field(None, alias="minTestimonials")
     min_reviews_for_seller: int = Field(..., alias="minTestimonialsForSeller")
 
 

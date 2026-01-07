@@ -1,5 +1,3 @@
-import json
-
 from ..core import PlayerokClient, _dig, _raise_on_gql_errors
 from ..graphql import GraphQLQuery as GQL
 from ..models import Chat, ChatList, ChatMessage, ChatMessageList, ChatStatuses, ChatTypes
@@ -98,14 +96,7 @@ class ChatService(PlayerokClient):
             )  # Can't send both text and photo
 
         if photo_path:
-            operations, map_data = GQL.create_chat_message_with_photo(chat_id=chat_id)
-            if text:
-                operations["variables"]["input"]["text"] = text
-
-            payload = {
-                "operations": json.dumps(operations),
-                "map": json.dumps(map_data),
-            }
+            payload = GQL.create_chat_message_with_photo(chat_id=chat_id, text=text)
 
             with open(photo_path, "rb") as f:
                 files = {"1": f}

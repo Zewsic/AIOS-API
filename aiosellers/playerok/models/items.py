@@ -9,8 +9,8 @@ from .basic import File
 
 
 class ItemPriorityStatusPriceRange(ApiModel):
-    min: int = Field(..., alias="min")
-    max: int = Field(..., alias="max")
+    min: int | None = Field(None, alias="min")
+    max: int | None = Field(None, alias="max")
 
 
 class ItemPriorityStatus(ApiModel):
