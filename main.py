@@ -2,8 +2,6 @@ import asyncio
 
 from dotenv import load_dotenv
 
-from aiosellers.playerok import Playerok
-
 load_dotenv()
 
 
@@ -11,25 +9,25 @@ async def main():
     ...
     # async with Playerok() as client:
     #     ...
-        # print("Me", client.id, client.username, client.email)
-        # print("Balance", client.balance)
-        #
-        # # user = await client.get_user("1f0aaa70-94e6-6b80-10de-96620e660d55")
-        # chat = await client.get_chat("1f0e988b-a807-6450-7fa5-9553f54ced5a")
-        # print("Chat", chat)
-        # async for message in chat.iter_messages():
-        #     if message.user:
-        #         print('—', message.user.username, ' -> ', message.text)
-        #     else:
-        #         print('—', message.text)
+    # print("Me", client.id, client.username, client.email)
+    # print("Balance", client.balance)
+    #
+    # # user = await client.get_user("1f0aaa70-94e6-6b80-10de-96620e660d55")
+    # chat = await client.get_chat("1f0e988b-a807-6450-7fa5-9553f54ced5a")
+    # print("Chat", chat)
+    # async for message in chat.iter_messages():
+    #     if message.user:
+    #         print('—', message.user.username, ' -> ', message.text)
+    #     else:
+    #         print('—', message.text)
 
-        # async for chat in client.iter_chats():
-        #     if chat.type != 'PM':
-        #         continue
-        #
-        #     print('Chat', chat.id)
-        #     print('— User: ', chat.user.id)
-        #     print('— Username: ', chat.user.username)
+    # async for chat in client.iter_chats():
+    #     if chat.type != 'PM':
+    #         continue
+    #
+    #     print('Chat', chat.id)
+    #     print('— User: ', chat.user.id)
+    #     print('— Username: ', chat.user.username)
 
     # account = await service.get_account(me.username)
     # print("Account:", account)

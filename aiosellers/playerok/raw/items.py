@@ -190,7 +190,9 @@ class RawItemsService:
             return None
         return MyItem(**data)
 
-    async def get_item_priority_statuses(self, item_id: str, price: int) -> list[ItemPriorityStatus]:
+    async def get_item_priority_statuses(
+        self, item_id: str, price: int
+    ) -> list[ItemPriorityStatus]:
         response = await self._transport.request(
             "post", "graphql", GQL.get_item_priority_statuses(item_id=item_id, price=price)
         )
@@ -224,4 +226,3 @@ class RawItemsService:
         if data is None:
             return None
         return MyItem(**data)
-

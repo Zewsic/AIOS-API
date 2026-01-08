@@ -15,4 +15,3 @@ class File:
     @classmethod
     def from_schema(cls, f: SchemaFile) -> "File":
         return cls(id=f.id, url=f.url, filename=f.filename, mime=f.mime)
-

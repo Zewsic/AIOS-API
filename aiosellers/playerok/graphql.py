@@ -190,8 +190,8 @@ class GraphQLQuery:
             "gameId": game_id,
             "gameCategoryId": category_id,
             "userId": user_id,
-            "status": ["APPROVED","PENDING_MODERATION","PENDING_APPROVAL"],
-            "withOfficial": False
+            "status": ["APPROVED", "PENDING_MODERATION", "PENDING_APPROVAL"],
+            "withOfficial": False,
         }
         sort_field = None
 

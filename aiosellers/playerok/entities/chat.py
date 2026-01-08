@@ -4,12 +4,14 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import TYPE_CHECKING, AsyncIterator
 
-from ..schemas import ChatTypes, UserProfile
-from ..schemas.chats import Chat as SchemaChat, ChatMessage as SchemaChatMessage
+from ..schemas import ChatTypes
+from ..schemas.chats import Chat as SchemaChat
+from ..schemas.chats import ChatMessage as SchemaChatMessage
 
 if TYPE_CHECKING:  # pragma: no cover
     from ..playerok import Playerok
     from .file import File
+    from .user import User
 
 
 @dataclass(slots=True)
@@ -93,11 +95,12 @@ class Chat:
         return self._client._get_user_identity(self._user_id)
 
     async def send_photo(self, path: str, *, mark_as_read: bool = False) -> None:
-        await self._client.raw.chats.send_message(self.id, photo_path=path, mark_as_read=mark_as_read)
+        await self._client.raw.chats.send_message(
+            self.id, photo_path=path, mark_as_read=mark_as_read
+        )
 
     async def send_text(self, text: str, *, mark_as_read: bool = False) -> None:
         await self._client.raw.chats.send_message(self.id, text=text, mark_as_read=mark_as_read)
-
 
     async def iter_messages(
         self,
@@ -117,7 +120,9 @@ class Chat:
                 break
             cursor = messages.page_info.end_cursor
 
-    async def get_messages(self, *, count: int = 24, cursor: str | None = None) -> list[ChatMessage]:
+    async def get_messages(
+        self, *, count: int = 24, cursor: str | None = None
+    ) -> list[ChatMessage]:
         remain = count
         resp = []
         while remain > 0:
@@ -135,4 +140,3 @@ class Chat:
             remain -= min(24, remain)
 
         return resp
-

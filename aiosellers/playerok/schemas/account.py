@@ -43,11 +43,15 @@ class UserProfile(ApiModel):
 
 class AccountBalance(ApiModel):
     id: str = Field(..., alias="id")
-    value: float = Field(..., alias="value") # Total balance
-    available: float = Field(..., alias="available") # Unlocked balance for purchasing items
-    frozen: float = Field(..., alias="frozen") # idk
-    pending_income: float = Field(..., alias="pendingIncome") # Unlockable balance (after up to 48 hours). Can be wasted for premium
-    withdrawable: float = Field(..., alias="withdrawable") # Balance that can be withdrawn right now.
+    value: float = Field(..., alias="value")  # Total balance
+    available: float = Field(..., alias="available")  # Unlocked balance for purchasing items
+    frozen: float = Field(..., alias="frozen")  # idk
+    pending_income: float = Field(
+        ..., alias="pendingIncome"
+    )  # Unlockable balance (after up to 48 hours). Can be wasted for premium
+    withdrawable: float = Field(
+        ..., alias="withdrawable"
+    )  # Balance that can be withdrawn right now.
 
 
 class AccountItemsStats(ApiModel):

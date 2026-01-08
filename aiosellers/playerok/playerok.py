@@ -7,7 +7,8 @@ from .cache import AsyncTTLCache
 from .entities import Chat, Deal, User
 from .raw import RawAPI
 from .schemas import Account
-from .schemas.account import UserProfile as SchemaUserProfile, AccountProfile
+from .schemas.account import AccountProfile
+from .schemas.account import UserProfile as SchemaUserProfile
 from .schemas.chats import Chat as SchemaChat
 from .schemas.deals import ItemDeal as SchemaDeal
 from .schemas.enums import ChatStatuses, ChatTypes, ItemDealDirections, ItemDealStatuses
@@ -97,18 +98,23 @@ class Playerok:
     def balance(self) -> float | None:
         return self.profile.balance if self.profile else None
 
-
     # --------------------
     # identity-map helpers
     # --------------------
     def _get_user_identity(self, user_id: str) -> User:
-        return self.cache.users.get_or_create(user_id, lambda: User._create(client=self, id=user_id))
+        return self.cache.users.get_or_create(
+            user_id, lambda: User._create(client=self, id=user_id)
+        )
 
     def _get_chat_identity(self, chat_id: str) -> Chat:
-        return self.cache.chats.get_or_create(chat_id, lambda: Chat._create(client=self, id=chat_id))
+        return self.cache.chats.get_or_create(
+            chat_id, lambda: Chat._create(client=self, id=chat_id)
+        )
 
     def _get_deal_identity(self, deal_id: str) -> Deal:
-        return self.cache.deals.get_or_create(deal_id, lambda: Deal._create(client=self, id=deal_id))
+        return self.cache.deals.get_or_create(
+            deal_id, lambda: Deal._create(client=self, id=deal_id)
+        )
 
     def _push_user_profile(self, profile: SchemaUserProfile) -> User:
         user = self._get_user_identity(profile.id)
@@ -198,8 +204,14 @@ class Playerok:
                 return
             cursor = chats.page_info.end_cursor
 
-    async def get_chats(self, *, count: int = 24, cursor: str | None = None, type: ChatTypes | None = None,
-        status: ChatStatuses | None = None) -> list[Chat]:
+    async def get_chats(
+        self,
+        *,
+        count: int = 24,
+        cursor: str | None = None,
+        type: ChatTypes | None = None,
+        status: ChatStatuses | None = None,
+    ) -> list[Chat]:
         remain = count
         resp = []
         while remain > 0:
@@ -238,8 +250,14 @@ class Playerok:
                 return
             cursor = deals.page_info.end_cursor
 
-    async def get_deals(self, *, count: int = 24, cursor: str | None = None, statuses: list[ItemDealStatuses] | None = None,
-        direction: ItemDealDirections | None = None) -> list[Deal]:
+    async def get_deals(
+        self,
+        *,
+        count: int = 24,
+        cursor: str | None = None,
+        statuses: list[ItemDealStatuses] | None = None,
+        direction: ItemDealDirections | None = None,
+    ) -> list[Deal]:
         remain = count
         resp = []
         while remain > 0:
@@ -259,4 +277,3 @@ class Playerok:
             cursor = deals.page_info.end_cursor
             remain -= min(24, remain)
         return resp
-

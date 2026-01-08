@@ -1,10 +1,10 @@
+from ..transport import PlayerokTransport
 from .account import RawAccountService
 from .chats import RawChatService
 from .deals import RawDealsService
 from .games import RawGamesService
 from .items import RawItemsService
 from .transactions import RawTransactionService
-from ..transport import PlayerokTransport
 
 
 class RawAPI:
@@ -35,4 +35,3 @@ __all__ = [
     "RawItemsService",
     "RawTransactionService",
 ]
-

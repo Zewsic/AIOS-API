@@ -4,10 +4,9 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 from ..schemas.account import UserProfile as SchemaUserProfile
-from ..schemas.enums import ChatTypes, UserType
+from ..schemas.enums import UserType
 
 if TYPE_CHECKING:  # pragma: no cover
-    from .chat import Chat
     from ..playerok import Playerok
 
 

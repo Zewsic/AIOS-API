@@ -123,4 +123,3 @@ class RawTransactionService:
 
         data = _dig(raw, ("data", "removeTransaction"))
         return Transaction(**data)
-

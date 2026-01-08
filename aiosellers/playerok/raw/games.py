@@ -179,4 +179,3 @@ class RawGamesService:
         if data is None:
             return None
         return GameCategoryDataFieldList(**data)
-

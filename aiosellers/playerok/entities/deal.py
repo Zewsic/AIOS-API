@@ -57,4 +57,3 @@ class Deal:
         if updated is not None:
             self._client._push_deal_schema(updated)
         return self
-
