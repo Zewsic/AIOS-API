@@ -153,11 +153,11 @@ async def main():
     #
     #         ValueError
 
-    service = ItemsService()
-    item = await service.get_item(slug='8ba135c7fb93-afon-pro-maks-luchshiy')
-    print("Item:", item)
+    # service = ItemsService()
+    # item = await service.get_item(slug='8ba135c7fb93-afon-pro-maks-luchshiy')
+    # print("Item:", item)
 
-    service = DealsService()
+    # service = DealsService()
     # deals = await service.get_deals(me.id, direction=ItemDealDirections.IN)
     # print(deals.model_dump_json(indent=2))
 
@@ -166,8 +166,8 @@ async def main():
 
     # r = await service.update_deal(deals.deals[0].id, ItemDealStatuses.CONFIRMED) # OUT-Confirm - SENT, OUT-Cancel - ROLL BACK. IN - CONFIRM - CONFIRMED
     # print(r)
-    created = await service.create_deal(item.id, TransactionProviderIds.BANK_CARD_RU)
-    print(created)
+    # created = await service.create_deal(item.id, TransactionProviderIds.BANK_CARD_RU)
+    # print(created)
 
 if __name__ == "__main__":
     asyncio.run(main())

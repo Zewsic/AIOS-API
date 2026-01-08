@@ -11,6 +11,12 @@ from .models import (
     ItemDealStatuses,
     ItemsSortOptions,
     QueryID,
+    SortDirections,
+    TransactionOperations,
+    TransactionPaymentMethodIds,
+    TransactionProviderDirections,
+    TransactionProviderIds,
+    TransactionStatuses,
 )
 
 
@@ -420,6 +426,117 @@ class GraphQLQuery:
             },
             sha256_hash=QueryID.chat_messages.value,
         )
+
+    # ------------ Transactions ------------
+
+    @staticmethod
+    def get_transaction_providers(
+        direction: TransactionProviderDirections = TransactionProviderDirections.IN,
+    ) -> dict[str, Any]:
+        return _persisted(
+            operation_name="transactionProviders",
+            variables={"filter": {"direction": direction.name if direction else None}},
+            sha256_hash=QueryID.transaction_providers.value,
+        )
+
+    @staticmethod
+    def get_transactions(
+        user_id: str,
+        count: int = 24,
+        operation: list[TransactionOperations] | None = None,
+        min_value: int | None = None,
+        max_value: int | None = None,
+        provider_id: list[TransactionProviderIds] | None = None,
+        status: list[TransactionStatuses] | None = None,
+        after_cursor: str | None = None,
+    ) -> dict[str, Any]:
+        filters: dict[str, Any] = {"userId": user_id}
+        if operation:
+            filters["operation"] = [op.name for op in operation]
+        if min_value or max_value:
+            filters["value"] = {}
+            if min_value:
+                filters["value"]["min"] = str(min_value)
+            if max_value:
+                filters["value"]["max"] = str(max_value)
+        if provider_id:
+            filters["providerId"] = [pid.name for pid in provider_id]
+        if status:
+            filters["status"] = [s.name for s in status]
+
+        return _persisted(
+            operation_name="transactions",
+            variables={
+                "pagination": {"first": count, "after": after_cursor},
+                "filter": filters,
+                "hasSupportAccess": False,
+            },
+            sha256_hash=QueryID.transactions.value,
+        )
+
+    @staticmethod
+    def get_sbp_bank_members() -> dict[str, Any]:
+        return _persisted(
+            operation_name="SbpBankMembers",
+            variables={},
+            sha256_hash=QueryID.sbp_bank_members.value,
+        )
+
+    @staticmethod
+    def get_verified_cards(
+        count: int = 24,
+        after_cursor: str | None = None,
+        direction: SortDirections = SortDirections.ASC,
+    ) -> dict[str, Any]:
+        return _persisted(
+            operation_name="verifiedCards",
+            variables={
+                "pagination": {"first": count, "after": after_cursor},
+                "sort": {"direction": direction.name},
+                "field": "createdAt",
+            },
+            sha256_hash=QueryID.verified_cards.value,
+        )
+
+    @staticmethod
+    def delete_card(card_id: str) -> dict[str, Any]:
+        return {
+            "operationName": "deleteCard",
+            "query": "mutation deleteCard($input: DeleteCardInput!) {\n  deleteCard(input: $input)\n}",
+            "variables": {"input": {"cardId": card_id}},
+        }
+
+    @staticmethod
+    def request_withdrawal(
+        provider: TransactionProviderIds,
+        account: str,
+        value: int,
+        payment_method_id: TransactionPaymentMethodIds | None = None,
+        sbp_bank_member_id: str | None = None,
+    ) -> dict[str, Any]:
+        return {
+            "operationName": "requestWithdrawal",
+            "query": "mutation requestWithdrawal($input: CreateWithdrawalTransactionInput!) {\n  requestWithdrawal(input: $input) {\n    ...RegularTransaction\n    __typename\n  }\n}\n\nfragment RegularTransaction on Transaction {\n  id\n  operation\n  direction\n  providerId\n  provider {\n    ...RegularTransactionProvider\n    __typename\n  }\n  user {\n    ...RegularUserFragment\n    __typename\n  }\n  creator {\n    ...RegularUserFragment\n    __typename\n  }\n  status\n  statusDescription\n  statusExpirationDate\n  value\n  fee\n  createdAt\n  props {\n    ...RegularTransactionProps\n    __typename\n  }\n  verifiedAt\n  verifiedBy {\n    ...UserEdgeNode\n    __typename\n  }\n  completedBy {\n    ...UserEdgeNode\n    __typename\n  }\n  paymentMethodId\n  completedAt\n  isSuspicious\n  spbBankName\n  __typename\n}\n\nfragment RegularTransactionProvider on TransactionProvider {\n  id\n  name\n  fee\n  minFeeAmount\n  description\n  account {\n    ...RegularTransactionProviderAccount\n    __typename\n  }\n  props {\n    ...TransactionProviderPropsFragment\n    __typename\n  }\n  limits {\n    ...ProviderLimits\n    __typename\n  }\n  paymentMethods {\n    ...TransactionPaymentMethod\n    __typename\n  }\n  __typename\n}\n\nfragment RegularTransactionProviderAccount on TransactionProviderAccount {\n  id\n  value\n  userId\n  providerId\n  paymentMethodId\n  __typename\n}\n\nfragment TransactionProviderPropsFragment on TransactionProviderPropsFragment {\n  requiredUserData {\n    ...TransactionProviderRequiredUserData\n    __typename\n  }\n  tooltip\n  __typename\n}\n\nfragment TransactionProviderRequiredUserData on TransactionProviderRequiredUserData {\n  email\n  phoneNumber\n  eripAccountNumber\n  __typename\n}\n\nfragment ProviderLimits on ProviderLimits {\n  incoming {\n    ...ProviderLimitRange\n    __typename\n  }\n  outgoing {\n    ...ProviderLimitRange\n    __typename\n  }\n  __typename\n}\n\nfragment ProviderLimitRange on ProviderLimitRange {\n  min\n  max\n  __typename\n}\n\nfragment TransactionPaymentMethod on TransactionPaymentMethod {\n  id\n  name\n  fee\n  providerId\n  account {\n    ...RegularTransactionProviderAccount\n    __typename\n  }\n  props {\n    ...TransactionProviderPropsFragment\n    __typename\n  }\n  limits {\n    ...ProviderLimits\n    __typename\n  }\n  __typename\n}\n\nfragment RegularUserFragment on UserFragment {\n  id\n  username\n  role\n  avatarURL\n  isOnline\n  isBlocked\n  rating\n  testimonialCounter\n  createdAt\n  supportChatId\n  systemChatId\n  __typename\n}\n\nfragment RegularTransactionProps on TransactionPropsFragment {\n  creatorId\n  dealId\n  paidFromPendingIncome\n  paymentURL\n  successURL\n  fee\n  paymentAccount {\n    id\n    value\n    __typename\n  }\n  paymentGateway\n  alreadySpent\n  exchangeRate\n  amountAfterConversionRub\n  amountAfterConversionUsdt\n  userData {\n    account\n    email\n    ipAddress\n    phoneNumber\n    __typename\n  }\n  __typename\n}\n\nfragment UserEdgeNode on UserFragment {\n  ...RegularUserFragment\n  __typename\n}",
+            "variables": {
+                "input": {
+                    "provider": provider.name,
+                    "account": account,
+                    "value": value,
+                    "providerData": {
+                        "paymentMethodId": payment_method_id.name if payment_method_id else None,
+                        "sbpBankMemberId": sbp_bank_member_id if sbp_bank_member_id else None,
+                    },
+                }
+            },
+        }
+
+    @staticmethod
+    def remove_transaction(transaction_id: str) -> dict[str, Any]:
+        return {
+            "operationName": "removeTransaction",
+            "query": "mutation removeTransaction($id: UUID!) {\n  removeTransaction(id: $id) {\n    ...RegularTransaction\n    __typename\n  }\n}\n\nfragment RegularTransaction on Transaction {\n  id\n  operation\n  direction\n  providerId\n  provider {\n    ...RegularTransactionProvider\n    __typename\n  }\n  user {\n    ...RegularUserFragment\n    __typename\n  }\n  creator {\n    ...RegularUserFragment\n    __typename\n  }\n  status\n  statusDescription\n  statusExpirationDate\n  value\n  fee\n  createdAt\n  props {\n    ...RegularTransactionProps\n    __typename\n  }\n  verifiedAt\n  verifiedBy {\n    ...UserEdgeNode\n    __typename\n  }\n  completedBy {\n    ...UserEdgeNode\n    __typename\n  }\n  paymentMethodId\n  completedAt\n  isSuspicious\n  spbBankName\n  __typename\n}\n\nfragment RegularTransactionProvider on TransactionProvider {\n  id\n  name\n  fee\n  minFeeAmount\n  description\n  account {\n    ...RegularTransactionProviderAccount\n    __typename\n  }\n  props {\n    ...TransactionProviderPropsFragment\n    __typename\n  }\n  limits {\n    ...ProviderLimits\n    __typename\n  }\n  paymentMethods {\n    ...TransactionPaymentMethod\n    __typename\n  }\n  __typename\n}\n\nfragment RegularTransactionProviderAccount on TransactionProviderAccount {\n  id\n  value\n  userId\n  providerId\n  paymentMethodId\n  __typename\n}\n\nfragment TransactionProviderPropsFragment on TransactionProviderPropsFragment {\n  requiredUserData {\n    ...TransactionProviderRequiredUserData\n    __typename\n  }\n  tooltip\n  __typename\n}\n\nfragment TransactionProviderRequiredUserData on TransactionProviderRequiredUserData {\n  email\n  phoneNumber\n  eripAccountNumber\n  __typename\n}\n\nfragment ProviderLimits on ProviderLimits {\n  incoming {\n    ...ProviderLimitRange\n    __typename\n  }\n  outgoing {\n    ...ProviderLimitRange\n    __typename\n  }\n  __typename\n}\n\nfragment ProviderLimitRange on ProviderLimitRange {\n  min\n  max\n  __typename\n}\n\nfragment TransactionPaymentMethod on TransactionPaymentMethod {\n  id\n  name\n  fee\n  providerId\n  account {\n    ...RegularTransactionProviderAccount\n    __typename\n  }\n  props {\n    ...TransactionProviderPropsFragment\n    __typename\n  }\n  limits {\n    ...ProviderLimits\n    __typename\n  }\n  __typename\n}\n\nfragment RegularUserFragment on UserFragment {\n  id\n  username\n  role\n  avatarURL\n  isOnline\n  isBlocked\n  rating\n  testimonialCounter\n  createdAt\n  supportChatId\n  systemChatId\n  __typename\n}\n\nfragment RegularTransactionProps on TransactionPropsFragment {\n  creatorId\n  dealId\n  paidFromPendingIncome\n  paymentURL\n  successURL\n  fee\n  paymentAccount {\n    id\n    value\n    __typename\n  }\n  paymentGateway\n  alreadySpent\n  exchangeRate\n  amountAfterConversionRub\n  amountAfterConversionUsdt\n  userData {\n    account\n    email\n    ipAddress\n    phoneNumber\n    __typename\n  }\n  __typename\n}\n\nfragment UserEdgeNode on UserFragment {\n  ...RegularUserFragment\n  __typename\n}",
+            "variables": {"id": transaction_id},
+        }
 
     @staticmethod
     def create_chat_message(chat_id: str, text: str) -> dict[str, Any]:

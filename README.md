@@ -33,16 +33,16 @@ uv add aiosellers
 
 ## Development Status: PlayerOK
 
-| Feature                 | Status         |
-|:------------------------|:---------------|
-| **Account Management**  | ✅ Ready        |
-| **Games Metadata**      | ✅ Ready        |
-| **Items Management**    | ✅ Ready        |
-| **Orders**              | ✅ Ready        |
-| **Topup / Withdrawals** | In Development |
-| **Messaging**           | ✅ Ready        |
-| **High-Level API**      | Planned        |
-| **Event listeners**     | Planned        |
+| Feature                 | Status  |
+|:------------------------|:--------|
+| **Account Management**  | ✅ Ready |
+| **Games Metadata**      | ✅ Ready |
+| **Items Management**    | ✅ Ready |
+| **Orders**              | ✅ Ready |
+| **Topup / Withdrawals** | ✅ Ready |
+| **Messaging**           | ✅ Ready |
+| **High-Level API**      | Planned |
+| **Event listeners**     | Planned |
 
 ---
 
