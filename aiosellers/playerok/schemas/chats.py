@@ -37,7 +37,7 @@ class Moderator(UnimplementedApiModel):
 class ChatMessageButton(ApiModel):
     type: ChatMessageButtonTypes = Field(..., alias="type")
     url: str | None = Field(None, alias="url")
-    text: str = Field(..., alias="text")
+    text: str | None = Field(None, alias="text")
 
 
 class ChatMessage(ApiModel):

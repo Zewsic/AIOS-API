@@ -28,7 +28,7 @@ class Account(ApiModel):
 class UserProfile(ApiModel):
     id: str = Field(..., alias="id")
     username: str = Field(..., alias="username")
-    role: UserType = Field(..., alias="role")
+    role: UserType = Field(UserType.USER, alias="role")
     avatar_url: str | None = Field(None, alias="avatarURL")
     is_online: bool | None = Field(None, alias="isOnline")
     is_blocked: bool = Field(False, alias="isBlocked")
@@ -43,11 +43,11 @@ class UserProfile(ApiModel):
 
 class AccountBalance(ApiModel):
     id: str = Field(..., alias="id")
-    value: float = Field(..., alias="value")
-    available: float = Field(..., alias="available")
-    frozen: float = Field(..., alias="frozen")
-    pending_income: float = Field(..., alias="pendingIncome")
-    withdrawable: float = Field(..., alias="withdrawable")
+    value: float = Field(..., alias="value") # Total balance
+    available: float = Field(..., alias="available") # Unlocked balance for purchasing items
+    frozen: float = Field(..., alias="frozen") # idk
+    pending_income: float = Field(..., alias="pendingIncome") # Unlockable balance (after up to 48 hours). Can be wasted for premium
+    withdrawable: float = Field(..., alias="withdrawable") # Balance that can be withdrawn right now.
 
 
 class AccountItemsStats(ApiModel):

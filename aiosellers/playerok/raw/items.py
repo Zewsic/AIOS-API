@@ -1,6 +1,8 @@
-from ..core import PlayerokClient, _dig, _raise_on_gql_errors
+from __future__ import annotations
+
+from ..core.utils import _dig, _raise_on_gql_errors
 from ..graphql import GraphQLQuery as GQL
-from ..models import (
+from ..schemas import (
     Item,
     ItemList,
     ItemPriorityStatus,
@@ -9,9 +11,13 @@ from ..models import (
     TransactionPaymentMethodIds,
     TransactionProviderIds,
 )
+from ..transport import PlayerokTransport
 
 
-class ItemsService(PlayerokClient):
+class RawItemsService:
+    def __init__(self, transport: PlayerokTransport):
+        self._transport = transport
+
     async def get_items(
         self,
         count: int = 24,
@@ -29,7 +35,7 @@ class ItemsService(PlayerokClient):
         if game_id is None or category_id is None:
             raise ValueError("Can't get items without game_id and category_id")
 
-        response = await self.request(
+        response = await self._transport.request(
             "post",
             "graphql",
             GQL.get_items(
@@ -52,21 +58,19 @@ class ItemsService(PlayerokClient):
         data = _dig(raw, ("data", "items"))
         if data is None:
             return None
-
         return ItemList(**data)
 
     async def get_item(self, id: str | None = None, slug: str | None = None) -> Item | None:
         if id is None and slug is None:
             raise ValueError("Can't get item without id or slug")
 
-        response = await self.request("post", "graphql", GQL.get_item(id=id, slug=slug))
+        response = await self._transport.request("post", "graphql", GQL.get_item(id=id, slug=slug))
         raw = response.json()
         _raise_on_gql_errors(raw)
 
         data = _dig(raw, ("data", "item"))
         if data is None:
             return None
-
         return Item(**data)
 
     async def create_item(
@@ -94,14 +98,8 @@ class ItemsService(PlayerokClient):
         )
 
         files = {str(i + 1): open(attachments[i], "rb") for i in range(len(attachments))}
-
         try:
-            response = await self.request(
-                "post",
-                "graphql",
-                payload,
-                files=files,
-            )
+            response = await self._transport.request("post", "graphql", payload, files=files)
         finally:
             for f in files.values():
                 f.close()
@@ -112,7 +110,6 @@ class ItemsService(PlayerokClient):
         data = _dig(raw, ("data", "createItem"))
         if data is None:
             return None
-
         return MyItem(**data)
 
     async def update_item(
@@ -150,12 +147,7 @@ class ItemsService(PlayerokClient):
         )
 
         try:
-            response = await self.request(
-                "post",
-                "graphql",
-                payload,
-                files=files,
-            )
+            response = await self._transport.request("post", "graphql", payload, files=files)
         finally:
             if files:
                 for f in files.values():
@@ -167,11 +159,10 @@ class ItemsService(PlayerokClient):
         data = _dig(raw, ("data", "updateItem"))
         if data is None:
             return None
-
         return MyItem(**data)
 
     async def remove_item(self, id: str) -> bool:
-        response = await self.request("post", "graphql", GQL.remove_item(id=id))
+        response = await self._transport.request("post", "graphql", GQL.remove_item(id=id))
         raw = response.json()
         _raise_on_gql_errors(raw)
         return True
@@ -182,7 +173,7 @@ class ItemsService(PlayerokClient):
         priority_status_id: str,
         transaction_provider_id: TransactionProviderIds = TransactionProviderIds.LOCAL,
     ) -> MyItem | None:
-        response = await self.request(
+        response = await self._transport.request(
             "post",
             "graphql",
             GQL.publish_item(
@@ -197,13 +188,10 @@ class ItemsService(PlayerokClient):
         data = _dig(raw, ("data", "publishItem"))
         if data is None:
             return None
-
         return MyItem(**data)
 
-    async def get_item_priority_statuses(
-        self, item_id: str, price: int
-    ) -> list[ItemPriorityStatus]:
-        response = await self.request(
+    async def get_item_priority_statuses(self, item_id: str, price: int) -> list[ItemPriorityStatus]:
+        response = await self._transport.request(
             "post", "graphql", GQL.get_item_priority_statuses(item_id=item_id, price=price)
         )
         raw = response.json()
@@ -219,7 +207,7 @@ class ItemsService(PlayerokClient):
         payment_method_id: TransactionPaymentMethodIds | None = None,
         transaction_provider_id: TransactionProviderIds = TransactionProviderIds.LOCAL,
     ) -> MyItem | None:
-        response = await self.request(
+        response = await self._transport.request(
             "post",
             "graphql",
             GQL.increase_item_priority_status(
@@ -235,5 +223,5 @@ class ItemsService(PlayerokClient):
         data = _dig(raw, ("data", "increaseItemPriorityStatus"))
         if data is None:
             return None
-
         return MyItem(**data)
+

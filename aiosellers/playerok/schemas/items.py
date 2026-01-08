@@ -31,11 +31,11 @@ class ItemLog(ApiModel):
 
 class Item(ApiModel):
     id: str = Field(..., alias="id")
-    slug: str = Field(..., alias="slug")
-    name: str = Field(..., alias="name")
+    slug: str | None = Field(None, alias="slug")
+    name: str | None = Field(None, alias="name")
     description: str | None = Field(None, alias="description")
-    price: int = Field(..., alias="price")
-    raw_price: int = Field(..., alias="rawPrice")
+    price: int | None = Field(None, alias="price")
+    raw_price: int | None = Field(None, alias="rawPrice")
 
     priority: PriorityTypes | None = Field(None, alias="priority")
     status: ItemStatuses | None = Field(None, alias="status")

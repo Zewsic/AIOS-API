@@ -28,7 +28,7 @@ class ItemDeal(ApiModel):
     status_description: str | None = Field(None, alias="statusDescription")
     direction: ItemDealDirections = Field(..., alias="direction")
     obtaining: str | None = Field(None, alias="obtaining")
-    has_problem: bool = Field(..., alias="hasProblem")
+    has_problem: bool = Field(False, alias="hasProblem")
     report_problem_enabled: bool | None = Field(None, alias="reportProblemEnabled")
     completed_user: UserProfile | None = Field(None, alias="completedBy")
     props: dict[str, Any] | None = Field(None, alias="props")

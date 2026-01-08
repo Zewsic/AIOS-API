@@ -1,7 +1,7 @@
 import json
 from typing import Any
 
-from .models import (
+from .schemas import (
     ChatStatuses,
     ChatTypes,
     GameCategoryDataFieldTypes,
@@ -176,6 +176,7 @@ class GraphQLQuery:
         count: int = 24,
         cursor: str | None = None,
         game_id: str | None = None,
+        user_id: str | None = None,
         category_id: str | None = None,
         minimal_price: int | None = None,
         maximal_price: int | None = None,
@@ -188,7 +189,9 @@ class GraphQLQuery:
         filters = {
             "gameId": game_id,
             "gameCategoryId": category_id,
-            "status": ["APPROVED"],
+            "userId": user_id,
+            "status": ["APPROVED","PENDING_MODERATION","PENDING_APPROVAL"],
+            "withOfficial": False
         }
         sort_field = None
 
@@ -414,11 +417,11 @@ class GraphQLQuery:
         )
 
     @staticmethod
-    def get_chat_messages(chat_id: str, count: int = 24, cursor: str | None = None):
+    def get_chat_messages(chat_id: str, count: int = 24, after_cursor: str | None = None):
         return _persisted(
             operation_name="chatMessages",
             variables={
-                "pagination": {"first": count, "after": cursor},
+                "pagination": {"first": count, "after": after_cursor},
                 "filter": {
                     "chatId": chat_id,
                 },

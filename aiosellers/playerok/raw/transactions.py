@@ -1,6 +1,8 @@
-from ..core import PlayerokClient, _dig, _raise_on_gql_errors
+from __future__ import annotations
+
+from ..core.utils import _dig, _raise_on_gql_errors
 from ..graphql import GraphQLQuery as GQL
-from ..models import (
+from ..schemas import (
     SBPBankMember,
     SortDirections,
     Transaction,
@@ -13,13 +15,19 @@ from ..models import (
     TransactionStatuses,
     UserBankCardList,
 )
+from ..transport import PlayerokTransport
 
 
-class TransactionService(PlayerokClient):
+class RawTransactionService:
+    def __init__(self, transport: PlayerokTransport):
+        self._transport = transport
+
     async def get_transaction_providers(
         self, direction: TransactionProviderDirections = TransactionProviderDirections.IN
     ) -> list[TransactionProvider]:
-        response = await self.request("post", "graphql", GQL.get_transaction_providers(direction))
+        response = await self._transport.request(
+            "post", "graphql", GQL.get_transaction_providers(direction)
+        )
         raw = response.json()
         _raise_on_gql_errors(raw)
 
@@ -37,7 +45,7 @@ class TransactionService(PlayerokClient):
         status: list[TransactionStatuses] | None = None,
         after_cursor: str | None = None,
     ) -> TransactionList:
-        response = await self.request(
+        response = await self._transport.request(
             "post",
             "graphql",
             GQL.get_transactions(
@@ -58,7 +66,7 @@ class TransactionService(PlayerokClient):
         return TransactionList(**data)
 
     async def get_sbp_bank_members(self) -> list[SBPBankMember]:
-        response = await self.request("post", "graphql", GQL.get_sbp_bank_members())
+        response = await self._transport.request("post", "graphql", GQL.get_sbp_bank_members())
         raw = response.json()
         _raise_on_gql_errors(raw)
 
@@ -71,7 +79,7 @@ class TransactionService(PlayerokClient):
         after_cursor: str | None = None,
         direction: SortDirections = SortDirections.ASC,
     ) -> UserBankCardList:
-        response = await self.request(
+        response = await self._transport.request(
             "post", "graphql", GQL.get_verified_cards(count, after_cursor, direction)
         )
         raw = response.json()
@@ -81,7 +89,7 @@ class TransactionService(PlayerokClient):
         return UserBankCardList(**data)
 
     async def delete_card(self, card_id: str) -> bool:
-        response = await self.request("post", "graphql", GQL.delete_card(card_id))
+        response = await self._transport.request("post", "graphql", GQL.delete_card(card_id))
         raw = response.json()
         _raise_on_gql_errors(raw)
 
@@ -95,7 +103,7 @@ class TransactionService(PlayerokClient):
         payment_method_id: TransactionPaymentMethodIds | None = None,
         sbp_bank_member_id: str | None = None,
     ) -> Transaction:
-        response = await self.request(
+        response = await self._transport.request(
             "post",
             "graphql",
             GQL.request_withdrawal(provider, account, value, payment_method_id, sbp_bank_member_id),
@@ -107,9 +115,12 @@ class TransactionService(PlayerokClient):
         return Transaction(**data)
 
     async def remove_transaction(self, transaction_id: str) -> Transaction:
-        response = await self.request("post", "graphql", GQL.remove_transaction(transaction_id))
+        response = await self._transport.request(
+            "post", "graphql", GQL.remove_transaction(transaction_id)
+        )
         raw = response.json()
         _raise_on_gql_errors(raw)
 
         data = _dig(raw, ("data", "removeTransaction"))
         return Transaction(**data)
+

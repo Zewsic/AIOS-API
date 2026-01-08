@@ -1,6 +1,8 @@
-from ..core import PlayerokClient, _dig, _raise_on_gql_errors
+from __future__ import annotations
+
+from ..core.utils import _dig, _raise_on_gql_errors
 from ..graphql import GraphQLQuery as GQL
-from ..models import (
+from ..schemas import (
     ItemDeal,
     ItemDealDirections,
     ItemDealList,
@@ -9,9 +11,13 @@ from ..models import (
     TransactionPaymentMethodIds,
     TransactionProviderIds,
 )
+from ..transport import PlayerokTransport
 
 
-class DealsService(PlayerokClient):
+class RawDealsService:
+    def __init__(self, transport: PlayerokTransport):
+        self._transport = transport
+
     async def get_deals(
         self,
         user_id: str,
@@ -20,7 +26,7 @@ class DealsService(PlayerokClient):
         direction: ItemDealDirections | None = None,
         after_cursor: str | None = None,
     ) -> ItemDealList | None:
-        response = await self.request(
+        response = await self._transport.request(
             "post",
             "graphql",
             GQL.get_deals(
@@ -37,22 +43,20 @@ class DealsService(PlayerokClient):
         data = _dig(raw, ("data", "deals"))
         if data is None:
             return None
-
         return ItemDealList(**data)
 
     async def get_deal(self, deal_id: str) -> ItemDeal | None:
-        response = await self.request("post", "graphql", GQL.get_deal(deal_id=deal_id))
+        response = await self._transport.request("post", "graphql", GQL.get_deal(deal_id=deal_id))
         raw = response.json()
         _raise_on_gql_errors(raw)
 
         data = _dig(raw, ("data", "deal"))
         if data is None:
             return None
-
         return ItemDeal(**data)
 
     async def update_deal(self, deal_id: str, new_status: ItemDealStatuses) -> ItemDeal | None:
-        response = await self.request(
+        response = await self._transport.request(
             "post", "graphql", GQL.update_deal(deal_id=deal_id, new_status=new_status)
         )
         raw = response.json()
@@ -61,7 +65,6 @@ class DealsService(PlayerokClient):
         data = _dig(raw, ("data", "updateDeal"))
         if data is None:
             return None
-
         return ItemDeal(**data)
 
     async def create_deal(
@@ -78,7 +81,7 @@ class DealsService(PlayerokClient):
             else None
         )
 
-        response = await self.request(
+        response = await self._transport.request(
             "post",
             "graphql",
             GQL.create_deal(
@@ -95,5 +98,4 @@ class DealsService(PlayerokClient):
         data = _dig(raw, ("data", "createDeal"))
         if data is None:
             return None
-
         return Transaction(**data)

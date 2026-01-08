@@ -148,6 +148,7 @@ class ChatMessageButtonTypes(StrEnum):
     # TODO: Add another types of buttons
     REDIRECT = "REDIRECT"
     LOTTERY = "LOTTERY"
+    ASK_FOR_EXTERNAL_REVIEW = "ASK_FOR_EXTERNAL_REVIEW"
 
 
 class ItemStatuses(StrEnum):
