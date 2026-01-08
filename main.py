@@ -2,9 +2,10 @@ import asyncio
 
 from dotenv import load_dotenv
 
-from aiosellers.playerok.models import ChatTypes, TransactionProviderIds
+from aiosellers.playerok.models import ChatTypes, TransactionProviderIds, ItemDealDirections, ItemDealStatuses
 from aiosellers.playerok.services.account import AccountService
 from aiosellers.playerok.services.chats import ChatService
+from aiosellers.playerok.services.deals import DealsService
 from aiosellers.playerok.services.games import GamesService
 from aiosellers.playerok.services.items import ItemsService
 
@@ -13,9 +14,9 @@ load_dotenv()
 
 async def main():
     pass
-    # service = AccountService()
-    # me = await service.get_me()
-    # print("Me:", me)
+    service = AccountService()
+    me = await service.get_me()
+    print("Me:", me)
     # account = await service.get_account(me.username)
     # print("Account:", account)
     # user = await service.get_user("Sen1a")
@@ -81,11 +82,11 @@ async def main():
     # resp_2 = await service.update_item(resp.id, price=500, remove_attachments=[resp.attachments[0].id])
     # print(resp_2.model_dump_json(indent=2))
 
-    # cresp = await service.get_item_priority_statuses("1f0ec1ee-c7e0-6060-a889-a80ffd87cdac", 1000)
+    # cresp = await service.get_item_priority_statuses("1f0ec20d-faa6-6480-c7cc-e84b361c455a", 1000)
     # for item in cresp:
     #     print(item)
 
-    # resp = await service.publish_item("1f0ec1ee-c7e0-6060-a889-a80ffd87cdac", cresp[-1].id)
+    # resp = await service.publish_item("1f0ec20d-faa6-6480-c7cc-e84b361c455a", cresp[-1].id)
     # print(resp.model_dump_json(indent=2))
 
     # resp = await service.increase_item_priority_status("1f0ec1ee-c7e0-6060-a889-a80ffd87cdac", cresp[0].id)
@@ -152,6 +153,21 @@ async def main():
     #
     #         ValueError
 
+    service = ItemsService()
+    item = await service.get_item(slug='8ba135c7fb93-afon-pro-maks-luchshiy')
+    print("Item:", item)
+
+    service = DealsService()
+    # deals = await service.get_deals(me.id, direction=ItemDealDirections.IN)
+    # print(deals.model_dump_json(indent=2))
+
+    # r = await service.get_deal("1f0ec20d-f997-6490-7877-eeba0c4a4925")
+    # print(r.model_dump_json(indent=2))
+
+    # r = await service.update_deal(deals.deals[0].id, ItemDealStatuses.CONFIRMED) # OUT-Confirm - SENT, OUT-Cancel - ROLL BACK. IN - CONFIRM - CONFIRMED
+    # print(r)
+    created = await service.create_deal(item.id, TransactionProviderIds.BANK_CARD_RU)
+    print(created)
 
 if __name__ == "__main__":
     asyncio.run(main())

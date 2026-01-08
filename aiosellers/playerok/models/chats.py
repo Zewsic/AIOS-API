@@ -83,7 +83,7 @@ class ChatMessageList(ApiModel):
 
 class Chat(ApiModel):
     id: str = Field(..., alias="id")
-    type: ChatTypes = Field(..., alias="type")
+    type: ChatTypes = Field(ChatTypes.PM, alias="type")
     status: ChatStatuses | None = Field(None, alias="status")
     unread_messages_counter: int | None = Field(None, alias="unreadMessagesCounter")
     bookmarked: bool | None = Field(None, alias="bookmarked")

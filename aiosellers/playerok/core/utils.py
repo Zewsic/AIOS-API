@@ -17,5 +17,7 @@ def _raise_on_gql_errors(payload: dict[str, Any]) -> None:
     errors = payload.get("errors")
     if errors:
         if len(errors) >= 1:
-            raise GraphQLError(errors[0].get("message", errors[0]))
+            if 'message' in errors[0]:
+                raise GraphQLError(errors[0]['message'] + ': ' + str(errors[0]))
+            raise GraphQLError(errors[0])
         raise GraphQLError(errors)
