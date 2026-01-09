@@ -285,8 +285,6 @@ class Playerok:
             remain -= min(24, remain)
         return resp
 
-
-
     async def iter_games(
         self,
         *,
@@ -333,4 +331,3 @@ class Playerok:
             cursor = games.page_info.end_cursor
             remain -= min(24, remain)
         return resp
-

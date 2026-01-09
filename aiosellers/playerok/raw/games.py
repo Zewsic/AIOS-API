@@ -2,15 +2,21 @@ from __future__ import annotations
 
 from ..core.utils import _dig, _raise_on_gql_errors
 from ..graphql import GraphQLQuery as GQL
-from ..schemas import Game, GameCategoryInstructionTypes, GameList, GameType, GameCategoryOptionTypes
+from ..schemas import (
+    Game,
+    GameCategoryInstructionTypes,
+    GameList,
+    GameType,
+)
 from ..schemas.games import (
     GameCategory,
+    GameCategoryAgreement,
     GameCategoryAgreementList,
     GameCategoryDataFieldList,
     GameCategoryDataFieldTypes,
     GameCategoryInstructionList,
     GameCategoryObtainingTypeList,
-    GameCategoryAgreement, GameCategoryOption,
+    GameCategoryOption,
 )
 from ..transport import PlayerokTransport
 
@@ -20,7 +26,11 @@ class RawGamesService:
         self._transport = transport
 
     async def get_games(
-        self, count: int = 24, type: GameType | None = None, search: str | None = None, cursor: str | None = None
+        self,
+        count: int = 24,
+        type: GameType | None = None,
+        search: str | None = None,
+        cursor: str | None = None,
     ) -> GameList | None:
         response = await self._transport.request(
             "post", "graphql", GQL.get_games(count=count, type=type, cursor=cursor, name=search)
@@ -199,7 +209,6 @@ class RawGamesService:
             return None
         return GameCategoryDataFieldList(**data)
 
-
     async def get_game_category_options(
         self,
         game_category_id: str,
@@ -218,4 +227,3 @@ class RawGamesService:
         if data is None:
             return None
         return [GameCategoryOption(**op) for op in data.get("options", [])]
-

@@ -65,13 +65,16 @@ class GraphQLQuery:
 
     @staticmethod
     def get_games(
-        count: int = 24, type: GameType | None = None, name: str | None = None, cursor: str | None = None
+        count: int = 24,
+        type: GameType | None = None,
+        name: str | None = None,
+        cursor: str | None = None,
     ) -> dict[str, Any]:
         return _persisted(
             operation_name="games",
             variables={
                 "pagination": {"first": count, "after": cursor},
-                "filter": {"type": type.name, 'name': name},
+                "filter": {"type": type.name, "name": name},
             },
             sha256_hash=QueryID.games.value,
         )
@@ -100,7 +103,7 @@ class GraphQLQuery:
     def get_game_category_agreements(
         game_category_id: str,
         user_id: str,
-            obtaining_type_id: str | None = None,
+        obtaining_type_id: str | None = None,
         count: int = 24,
         cursor: str | None = None,
     ) -> dict[str, Any]:
@@ -108,7 +111,11 @@ class GraphQLQuery:
             operation_name="gameCategoryAgreements",
             variables={
                 "pagination": {"first": count, "after": cursor},
-                "filter": {"gameCategoryId": game_category_id, "userId": user_id, "gameCategoryObtainingTypeId": obtaining_type_id},
+                "filter": {
+                    "gameCategoryId": game_category_id,
+                    "userId": user_id,
+                    "gameCategoryObtainingTypeId": obtaining_type_id,
+                },
             },
             sha256_hash=QueryID.game_category_agreements.value,
         )

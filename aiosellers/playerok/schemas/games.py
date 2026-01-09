@@ -56,6 +56,7 @@ class GameCategoryProps(ApiModel):
     min_reviews: int | None = Field(None, alias="minTestimonials")
     min_reviews_for_seller: int = Field(..., alias="minTestimonialsForSeller")
 
+
 class GameCategoryOptionRangeLimit(ApiModel):
     min: int | None = Field(None, alias="min")
     max: int | None = Field(None, alias="max")

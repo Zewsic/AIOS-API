@@ -21,9 +21,7 @@ async def main():
         for obtaining_type in obtaining_types:
             print("Getting instructions for {}:".format(obtaining_type))
             for instruction in await obtaining_type.get_data_fields():
-                instruction.set_value(input(f'>> Input value for {instruction.name}: '))
-
-
+                instruction.set_value(input(f">> Input value for {instruction.name}: "))
 
     #
     # # user = await client.get_user("1f0aaa70-94e6-6b80-10de-96620e660d55")

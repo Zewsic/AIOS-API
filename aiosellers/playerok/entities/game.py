@@ -2,21 +2,35 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass, field
-from typing import AsyncIterator, TYPE_CHECKING
+from typing import TYPE_CHECKING, AsyncIterator
 
-from . import File
-from ..schemas import GameType, GameCategoryAgreementIconTypes, GameCategoryOptionTypes, \
-    GameCategoryDataFieldInputTypes, GameCategoryDataFieldTypes
+from ..schemas import (
+    GameCategoryAgreementIconTypes,
+    GameCategoryDataFieldInputTypes,
+    GameCategoryDataFieldTypes,
+    GameCategoryOptionTypes,
+    GameType,
+)
 from ..schemas.games import (
     Game as SchemaGame,
-    GameCategory as SchemaGameCategory,
-    GameCategoryAgreement as SchemaGameCategoryAgreement,
-GameCategoryInstruction as SchemaGameCategoryInstruction,
-GameCategoryObtainingType as SchemaGameCategoryObtainingType,
 )
+from ..schemas.games import (
+    GameCategory as SchemaGameCategory,
+)
+from ..schemas.games import (
+    GameCategoryAgreement as SchemaGameCategoryAgreement,
+)
+from ..schemas.games import (
+    GameCategoryInstruction as SchemaGameCategoryInstruction,
+)
+from ..schemas.games import (
+    GameCategoryObtainingType as SchemaGameCategoryObtainingType,
+)
+from . import File
 
 if TYPE_CHECKING:
     from aiosellers.playerok import Playerok
+
 
 @dataclass(slots=True)
 class OptionValue:
@@ -30,6 +44,7 @@ class OptionValue:
 
     def __repr__(self):
         return f"OptionSelectorValue(name='{self.name}', value='{self.value}')"
+
 
 @dataclass(slots=True)
 class GameCategoryOption:
@@ -85,7 +100,14 @@ class GameCategoryAgreement:
         obtaining_type: "GameCategoryObtainingType" = None,
         client: "Playerok" = None,
     ) -> "GameCategoryAgreement":
-        return cls(id=f.id, description=f.description, game_category=game_category, obtaining_type=obtaining_type, _client=client, type=f.icon_type)
+        return cls(
+            id=f.id,
+            description=f.description,
+            game_category=game_category,
+            obtaining_type=obtaining_type,
+            _client=client,
+            type=f.icon_type,
+        )
 
     async def accept(self, *, skip_waiting: bool = False) -> "GameCategoryAgreement":
         "PLEASE CALL ASYNCIO WAIT AFTER EXECUTING"
@@ -94,7 +116,6 @@ class GameCategoryAgreement:
         if not skip_waiting:
             await asyncio.sleep(0.2)
         return resp is not None
-
 
 
 @dataclass(slots=True)
@@ -110,7 +131,7 @@ class GameCategoryInstruction:
         cls,
         f: SchemaGameCategoryInstruction,
         game_category: "GameCategory" = None,
-        obtaining_type: "GameCategoryObtainingType" = None
+        obtaining_type: "GameCategoryObtainingType" = None,
     ) -> "GameCategoryInstruction":
         return cls(id=f.id, text=f.text, game_category=game_category, obtaining_type=obtaining_type)
 
@@ -126,12 +147,18 @@ class GameCategoryObtainingType:
 
     @classmethod
     def from_schema(
-            cls,
-            f: SchemaGameCategoryObtainingType,
-            game_category: "GameCategory" = None,
-            client: "Playerok" = None,
+        cls,
+        f: SchemaGameCategoryObtainingType,
+        game_category: "GameCategory" = None,
+        client: "Playerok" = None,
     ) -> "GameCategoryObtainingType":
-        return cls(id=f.id, name=f.name, description=f.description, game_category=game_category, _client=client)
+        return cls(
+            id=f.id,
+            name=f.name,
+            description=f.description,
+            game_category=game_category,
+            _client=client,
+        )
 
     async def iter_instructions(
         self,
@@ -168,9 +195,11 @@ class GameCategoryObtainingType:
             if instructions is None:
                 break
             for arg in instructions.instructions:
-                resp.append(GameCategoryInstruction.from_schema(
-                    arg, game_category=self.game_category, obtaining_type=self
-                ))
+                resp.append(
+                    GameCategoryInstruction.from_schema(
+                        arg, game_category=self.game_category, obtaining_type=self
+                    )
+                )
             if not instructions.page_info.has_next_page:
                 break
             cursor = instructions.page_info.end_cursor
@@ -178,9 +207,7 @@ class GameCategoryObtainingType:
 
         return resp
 
-    async def get_data_fields(
-        self
-    ) -> list[GameCategoryDataField]:
+    async def get_data_fields(self) -> list[GameCategoryDataField]:
         resp = []
         cursor = None
         while True:
@@ -192,13 +219,20 @@ class GameCategoryObtainingType:
             if data_fields is None:
                 break
             for arg in data_fields.data_fields:
-                resp.append(GameCategoryDataField(id=arg.id, type=arg.type, input_type=arg.input_type, name=arg.label, required=arg.required))
+                resp.append(
+                    GameCategoryDataField(
+                        id=arg.id,
+                        type=arg.type,
+                        input_type=arg.input_type,
+                        name=arg.label,
+                        required=arg.required,
+                    )
+                )
             if not data_fields.page_info.has_next_page:
                 break
             cursor = data_fields.page_info.end_cursor
 
         return resp
-
 
     async def iter_agreements(
         self,
@@ -238,7 +272,12 @@ class GameCategoryObtainingType:
                 break
             for arg in agreements.agreements:
                 resp.append(
-                    GameCategoryAgreement.from_schema(arg, game_category=self.game_category, obtaining_type=self, client=self._client)
+                    GameCategoryAgreement.from_schema(
+                        arg,
+                        game_category=self.game_category,
+                        obtaining_type=self,
+                        client=self._client,
+                    )
                 )
             if not agreements.page_info.has_next_page:
                 break
@@ -308,7 +347,6 @@ class GameCategory:
 
         return resp
 
-
     async def iter_obtaining_types(
         self,
         *,
@@ -342,9 +380,11 @@ class GameCategory:
             if obtaining_types is None:
                 break
             for arg in obtaining_types.obtaining_types:
-                resp.append(GameCategoryObtainingType.from_schema(
-                    arg, game_category=self, client=self._client
-                ))
+                resp.append(
+                    GameCategoryObtainingType.from_schema(
+                        arg, game_category=self, client=self._client
+                    )
+                )
             if not obtaining_types.page_info.has_next_page:
                 break
             cursor = obtaining_types.page_info.end_cursor
@@ -352,32 +392,44 @@ class GameCategory:
 
         return resp
 
-    async def get_options(
-        self
-    ) -> list[GameCategoryOption]:
+    async def get_options(self) -> list[GameCategoryOption]:
         options = {}
-        raw_options = await self._client.raw.games.get_game_category_options(game_category_id=self.id)
+        raw_options = await self._client.raw.games.get_game_category_options(
+            game_category_id=self.id
+        )
         for option in raw_options:
             if option.field not in options:
-                options[option.field] = GameCategoryOption(option.id, type=option.type,
-                                                           group_name=option.group, slug=option.field, possible_values=[])
+                options[option.field] = GameCategoryOption(
+                    option.id,
+                    type=option.type,
+                    group_name=option.group,
+                    slug=option.field,
+                    possible_values=[],
+                )
 
             option_object = options[option.field]
             if option.type is GameCategoryOptionTypes.SELECTOR:
-                option_object.possible_values.append(OptionValue(value=option.value, name=option.label, _option=option_object))
+                option_object.possible_values.append(
+                    OptionValue(value=option.value, name=option.label, _option=option_object)
+                )
             elif option.type is GameCategoryOptionTypes.RANGE:
                 minimal_value = min(0, option.value_range_limit.min or 0)
                 maximal_value = max(0, option.value_range_limit.max or 0)
                 for i in range(minimal_value, maximal_value):
-                    option_object.possible_values.append(OptionValue(value=str(i), name=str(i), _option=option_object))
+                    option_object.possible_values.append(
+                        OptionValue(value=str(i), name=str(i), _option=option_object)
+                    )
             elif option.type is GameCategoryOptionTypes.SWITCH:
-                option_object.possible_values.append(OptionValue(value='false', name='No', _option=option_object))
-                option_object.possible_values.append(OptionValue(value='true', name='Yes', _option=option_object))
+                option_object.possible_values.append(
+                    OptionValue(value="false", name="No", _option=option_object)
+                )
+                option_object.possible_values.append(
+                    OptionValue(value="true", name="Yes", _option=option_object)
+                )
             else:
                 raise TypeError(f"Unknown option type: {option.type}")
 
         return list(options.values())
-
 
 
 @dataclass(slots=True)
