@@ -5,8 +5,9 @@ from typing import Any, AsyncIterator
 
 from .cache import AsyncTTLCache
 from .entities import Chat, Deal, User
+from .entities.game import Game
 from .raw import RawAPI
-from .schemas import Account
+from .schemas import Account, GameType
 from .schemas.account import AccountProfile
 from .schemas.account import UserProfile as SchemaUserProfile
 from .schemas.chats import Chat as SchemaChat
@@ -182,6 +183,12 @@ class Playerok:
             return None
         return self._push_chat_schema(deal)
 
+    async def get_game(self, game_id: str | None, slug: str | None = None) -> Game | None:
+        game = await self.raw.games.get_game(game_id, slug)
+        if game is None:
+            return None
+        return Game.from_schema(game, self)
+
     # --------------------
     # iterators / queries
     # --------------------
@@ -277,3 +284,53 @@ class Playerok:
             cursor = deals.page_info.end_cursor
             remain -= min(24, remain)
         return resp
+
+
+
+    async def iter_games(
+        self,
+        *,
+        type: GameType | None = None,
+        cursor: str | None = None,
+        search: str | None = None,
+    ) -> AsyncIterator[Game]:
+        while True:
+            games = await self.raw.games.get_games(
+                type=type,
+                cursor=cursor,
+                search=search,
+            )
+            if games is None:
+                return
+            for d in games.games:
+                yield Game.from_schema(d, self)
+            if not games.page_info.has_next_page:
+                return
+            cursor = games.page_info.end_cursor
+
+    async def get_games(
+        self,
+        *,
+        count: int = 24,
+        cursor: str | None = None,
+        type: GameType | None = None,
+        search: str | None = None,
+    ) -> list[Game]:
+        remain = count
+        resp = []
+        while remain > 0:
+            games = await self.raw.games.get_games(
+                type=type,
+                cursor=cursor,
+                search=search,
+            )
+            if games is None:
+                break
+            for d in games.games:
+                resp.append(Game.from_schema(d, self))
+            if not games.page_info.has_next_page:
+                break
+            cursor = games.page_info.end_cursor
+            remain -= min(24, remain)
+        return resp
+

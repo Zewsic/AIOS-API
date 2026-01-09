@@ -55,7 +55,6 @@ from .games import (
     GameCategoryOption,
     GameCategoryProps,
     GameList,
-    GameProfile,
 )
 from .items import (
     Item,
@@ -148,7 +147,6 @@ __all__ = [
     "GameCategoryOption",
     "GameCategoryProps",
     "GameList",
-    "GameProfile",
     "Item",
     "ItemList",
     "ItemLog",

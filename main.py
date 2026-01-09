@@ -2,15 +2,29 @@ import asyncio
 
 from dotenv import load_dotenv
 
+from aiosellers.playerok import Playerok
+
 load_dotenv()
 
 
 async def main():
-    ...
-    # async with Playerok() as client:
-    #     ...
-    # print("Me", client.id, client.username, client.email)
-    # print("Balance", client.balance)
+    async with Playerok() as client:
+        ...
+        print("Me", client.id, client.username, client.email)
+        print("Balance", client.balance)
+
+        games = await client.get_games(count=2)
+        category = games[1].categories[3]
+        # for option in await category.get_options():
+        #     print(option.possible_values[10].select())
+        obtaining_types = await category.get_obtaining_types()
+        for obtaining_type in obtaining_types:
+            print("Getting instructions for {}:".format(obtaining_type))
+            for instruction in await obtaining_type.get_data_fields():
+                instruction.set_value(input(f'>> Input value for {instruction.name}: '))
+
+
+
     #
     # # user = await client.get_user("1f0aaa70-94e6-6b80-10de-96620e660d55")
     # chat = await client.get_chat("1f0e988b-a807-6450-7fa5-9553f54ced5a")

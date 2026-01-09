@@ -65,13 +65,13 @@ class GraphQLQuery:
 
     @staticmethod
     def get_games(
-        count: int = 24, type: GameType | None = None, cursor: str | None = None
+        count: int = 24, type: GameType | None = None, name: str | None = None, cursor: str | None = None
     ) -> dict[str, Any]:
         return _persisted(
             operation_name="games",
             variables={
                 "pagination": {"first": count, "after": cursor},
-                "filter": {"type": type.name} if type else {},
+                "filter": {"type": type.name, 'name': name},
             },
             sha256_hash=QueryID.games.value,
         )
@@ -99,7 +99,8 @@ class GraphQLQuery:
     @staticmethod
     def get_game_category_agreements(
         game_category_id: str,
-        user_id: str | None = None,
+        user_id: str,
+            obtaining_type_id: str | None = None,
         count: int = 24,
         cursor: str | None = None,
     ) -> dict[str, Any]:
@@ -107,9 +108,22 @@ class GraphQLQuery:
             operation_name="gameCategoryAgreements",
             variables={
                 "pagination": {"first": count, "after": cursor},
-                "filter": {"gameCategoryId": game_category_id, "userId": user_id},
+                "filter": {"gameCategoryId": game_category_id, "userId": user_id, "gameCategoryObtainingTypeId": obtaining_type_id},
             },
             sha256_hash=QueryID.game_category_agreements.value,
+        )
+
+    @staticmethod
+    def accept_game_category_agreement(
+        agreement_id: str,
+        user_id: str,
+    ) -> dict[str, Any]:
+        return _persisted(
+            operation_name="acceptGameCategoryAgreement",
+            variables={
+                "input": {"agreementId": agreement_id, "userId": user_id},
+            },
+            query="mutation acceptGameCategoryAgreement($input: AcceptGameCategoryAgreementInput!) {\n  acceptGameCategoryAgreement(input: $input) {\n    ...RegularGameCategoryAgreement\n    __typename\n  }\n}\n\nfragment RegularGameCategoryAgreement on GameCategoryAgreement {\n  description\n  gameCategoryId\n  gameCategoryObtainingTypeId\n  iconType\n  id\n  sequence\n  __typename\n}",
         )
 
     @staticmethod
@@ -167,6 +181,16 @@ class GraphQLQuery:
                 },
             },
             sha256_hash=QueryID.game_category_data_fields.value,
+        )
+
+    @staticmethod
+    def get_game_category_options(
+        game_category_id: str,
+    ) -> dict[str, Any]:
+        return _persisted(
+            operation_name="gameCategoryOptions",
+            variables={"id": game_category_id},
+            sha256_hash=QueryID.game_category_options.value,
         )
 
     # ------------ Items ------------

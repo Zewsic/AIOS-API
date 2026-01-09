@@ -56,6 +56,10 @@ class GameCategoryProps(ApiModel):
     min_reviews: int | None = Field(None, alias="minTestimonials")
     min_reviews_for_seller: int = Field(..., alias="minTestimonialsForSeller")
 
+class GameCategoryOptionRangeLimit(ApiModel):
+    min: int | None = Field(None, alias="min")
+    max: int | None = Field(None, alias="max")
+
 
 class GameCategoryOption(ApiModel):
     id: str = Field(..., alias="id")
@@ -65,7 +69,7 @@ class GameCategoryOption(ApiModel):
     type: GameCategoryOptionTypes = Field(..., alias="type")
     field: str = Field(..., alias="field")
     value: str = Field(..., alias="value")
-    value_range_limit: int | None = Field(None, alias="valueRangeLimit")
+    value_range_limit: GameCategoryOptionRangeLimit | None = Field(None, alias="valueRangeLimit")
 
 
 class GameCategoryAgreement(ApiModel):
@@ -197,14 +201,6 @@ class Game(ApiModel):
 
     categories: list[GameCategory] = Field(..., alias="categories")
     created_at: datetime = Field(..., alias="createdAt")
-
-
-class GameProfile(ApiModel):
-    id: str = Field(..., alias="id")
-    slug: str = Field(..., alias="slug")
-    name: str = Field(..., alias="name")
-    type: GameType = Field(..., alias="type")
-    logo: File = Field(..., alias="logo")
 
 
 class GameList(ApiModel):

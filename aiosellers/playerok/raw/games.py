@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from ..core.utils import _dig, _raise_on_gql_errors
 from ..graphql import GraphQLQuery as GQL
-from ..schemas import Game, GameCategoryInstructionTypes, GameList, GameType
+from ..schemas import Game, GameCategoryInstructionTypes, GameList, GameType, GameCategoryOptionTypes
 from ..schemas.games import (
     GameCategory,
     GameCategoryAgreementList,
@@ -10,6 +10,7 @@ from ..schemas.games import (
     GameCategoryDataFieldTypes,
     GameCategoryInstructionList,
     GameCategoryObtainingTypeList,
+    GameCategoryAgreement, GameCategoryOption,
 )
 from ..transport import PlayerokTransport
 
@@ -19,10 +20,10 @@ class RawGamesService:
         self._transport = transport
 
     async def get_games(
-        self, count: int = 24, type: GameType | None = None, cursor: str | None = None
+        self, count: int = 24, type: GameType | None = None, search: str | None = None, cursor: str | None = None
     ) -> GameList | None:
         response = await self._transport.request(
-            "post", "graphql", GQL.get_games(count=count, type=type, cursor=cursor)
+            "post", "graphql", GQL.get_games(count=count, type=type, cursor=cursor, name=search)
         )
         raw = response.json()
         _raise_on_gql_errors(raw)
@@ -67,6 +68,7 @@ class RawGamesService:
         game_category_id: str,
         user_id: str,
         count: int = 24,
+        obtaining_type_id: str | None = None,
         cursor: str | None = None,
     ) -> GameCategoryAgreementList | None:
         if not game_category_id:
@@ -77,6 +79,7 @@ class RawGamesService:
             "graphql",
             GQL.get_game_category_agreements(
                 game_category_id=game_category_id,
+                obtaining_type_id=obtaining_type_id,
                 user_id=user_id,
                 count=count,
                 cursor=cursor,
@@ -89,6 +92,22 @@ class RawGamesService:
         if data is None:
             return None
         return GameCategoryAgreementList(**data)
+
+    async def accept_game_category_agreement(
+        self, agreement_id: str, user_id: str
+    ) -> GameCategoryAgreement:
+        response = await self._transport.request(
+            "post",
+            "graphql",
+            GQL.accept_game_category_agreement(agreement_id=agreement_id, user_id=user_id),
+        )
+        raw = response.json()
+        _raise_on_gql_errors(raw)
+
+        data = _dig(raw, ("data", "acceptGameCategoryAgreement"))
+        if data is None:
+            return None
+        return GameCategoryAgreement(**data)
 
     async def get_game_category_obtaining_types(
         self,
@@ -179,3 +198,24 @@ class RawGamesService:
         if data is None:
             return None
         return GameCategoryDataFieldList(**data)
+
+
+    async def get_game_category_options(
+        self,
+        game_category_id: str,
+    ) -> list[GameCategoryOption]:
+        response = await self._transport.request(
+            "post",
+            "graphql",
+            GQL.get_game_category_options(
+                game_category_id=game_category_id,
+            ),
+        )
+        raw = response.json()
+        _raise_on_gql_errors(raw)
+
+        data = _dig(raw, ("data", "gameCategory"))
+        if data is None:
+            return None
+        return [GameCategoryOption(**op) for op in data.get("options", [])]
+

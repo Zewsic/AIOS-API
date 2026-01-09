@@ -14,6 +14,7 @@ class QueryID(StrEnum):
     )
     game_category_instructions = "5991cead6a8ca46195bc4f7ae3164e7606105dbb82834c910658edeb0a1d1918"
     game_category_data_fields = "6fdadfb9b05880ce2d307a1412bc4f2e383683061c281e2b65a93f7266ea4a49"
+    game_category_options = "ee8fdbe4e6fe6a924d5c19d5eed47bd9856f4dd16ee2e0e76841d0794a1f1b9b"
     chats = "999f86b7c94a4cb525ed5549d8f24d0d24036214f02a213e8fd7cefc742bbd58"
     chat = "bb024dc0652fc7c1302a64a117d56d99fb0d726eb4b896ca803dca55f611d933"
     chat_messages = "e8162a8500865f4bb18dbaacb1c4703823f74c1925a91a5103f41c2021f0557a"
@@ -27,6 +28,7 @@ class QueryID(StrEnum):
 
 
 class GameType(StrEnum):
+    MOBILE_GAME = "MOBILE_GAME"
     GAME = "GAME"
     APPLICATION = "APPLICATION"
 
@@ -195,6 +197,7 @@ class GameCategoryOptionTypes(StrEnum):
     # TODO: Add another types of options
     SELECTOR = "SELECTOR"
     SWITCH = "SWITCH"
+    RANGE = "RANGE"
 
 
 class GameCategoryDataFieldInputTypes(StrEnum):

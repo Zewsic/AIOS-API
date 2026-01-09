@@ -33,15 +33,15 @@ uv add aiosellers
 
 ## Development Status: PlayerOK
 
-| Feature                 | Low-Level Status | High-Level Status |
-|:------------------------|:-----------------|:------------------|
-| **Account Management**  | ✅ Ready          | ✅ Ready           |
-| **Games Metadata**      | ✅ Ready          | Planned           |
-| **Items Management**    | ✅ Ready          | In Development    |
-| **Orders**              | ✅ Ready          | In Development    |
-| **Topup / Withdrawals** | ✅ Ready          | Planned           |
-| **Messaging**           | ✅ Ready          | ✅ Ready           |
-| **Event listeners**     | Planned          | Planned           |
+| Feature                    | Low-Level Status | High-Level Status |
+|:---------------------------|:-----------------|:------------------|
+| **Account Management**     | ✅ Ready          | ✅ Ready           |
+| **Games Metadata**         | ✅ Ready          | ✅ Ready           |
+| **Items Management**       | ✅ Ready          | In Development    |
+| **Orders**                 | ✅ Ready          | In Development    |
+| **Topup / Withdrawals**    | ✅ Ready          | Planned           |
+| **Messaging**              | ✅ Ready          | ✅ Ready           |
+| **Event listeners**        | Planned          | Planned           |
 
 ---
 
