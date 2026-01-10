@@ -217,7 +217,6 @@ class GraphQLQuery:
         search: str | None = None,
         sort: ItemsSortOptions | None = None,
     ) -> dict[str, Any]:
-
         if user_id is None:
             filters = {
                 "gameId": game_id,

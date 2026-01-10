@@ -8,14 +8,7 @@ from .transactions import RawTransactionService
 
 
 class RawAPI:
-    """
-    Low-level API access (raw GraphQL + parsing into Schema models).
-
-    This layer has:
-    - no caching
-    - no domain methods
-    - no cross-service orchestration
-    """
+    """Low-level API access."""
 
     def __init__(self, transport: PlayerokTransport):
         self.account = RawAccountService(transport)

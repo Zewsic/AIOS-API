@@ -86,6 +86,7 @@ class Transaction(ApiModel):
     payment_method_id: str | None = Field(None, alias="paymentMethodId")
     is_suspicious: bool | None = Field(None, alias="isSuspicious")
     sbp_bank_name: str | None = Field(None, alias="spbBankName")
+    props: dict[str, Any] | None = Field(None, alias="props")
 
 
 class TransactionList(ApiModel):

@@ -1,5 +1,3 @@
-"""Deals API module."""
-
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, AsyncIterator
@@ -8,22 +6,21 @@ from ..entities.deal import Deal
 from ..schemas.enums import ItemDealDirections, ItemDealStatuses
 
 if TYPE_CHECKING:
+    from ..entities.item import Item
     from ..playerok import Playerok
 
 
 class DealAPI:
-    """Deal-related API methods."""
-
     def __init__(self, client: Playerok) -> None:
         self._client = client
 
     def _create_deal(self, schema) -> Deal:
-        """Create Deal entity from schema and attach client."""
         deal = Deal(
             id=schema.id,
             status=schema.status,
             user_id=schema.user.id if schema.user else None,
             chat_id=schema.chat.id if schema.chat else None,
+            item_id=schema.item.id if schema.item else None,
         )
         deal._client = self._client
 
@@ -33,22 +30,11 @@ class DealAPI:
         return deal
 
     async def get(self, deal_id: str, *, force_refresh: bool = False) -> Deal | None:
-        """Get deal by ID.
-
-        Args:
-            deal_id: Deal ID to fetch.
-            force_refresh: If True, bypass identity map and fetch fresh data.
-
-        Returns:
-            Deal entity with client attached, or None if not found.
-        """
-        # Check identity map first
         if not force_refresh and self._client._use_identity_map:
             cached = self._client._identity_maps.deals.get(deal_id)
             if cached:
                 return cached
 
-        # Fetch from API
         schema = await self._client._raw.deals.get_deal(deal_id)
         if schema is None:
             return None
@@ -63,19 +49,8 @@ class DealAPI:
         statuses: list[ItemDealStatuses] | None = None,
         direction: ItemDealDirections | None = None,
         user_id: str | None = None,
+        item_id: str | None = None,
     ) -> list[Deal]:
-        """Get list of deals.
-
-        Args:
-            limit: Maximum number of deals to fetch.
-            cursor: Pagination cursor.
-            statuses: Filter by deal statuses.
-            direction: Filter by deal direction (IN/OUT).
-            user_id: Filter results by user ID.
-
-        Returns:
-            List of Deal entities.
-        """
         result = []
         remain = limit
         current_cursor = cursor
@@ -93,9 +68,14 @@ class DealAPI:
 
             for schema in response.deals:
                 deal_user_id = schema.user.id if schema.user else None
+                deal_item_id = schema.item.id if schema.item else None
 
                 # Filter by user_id if specified
                 if user_id is not None and deal_user_id != user_id:
+                    continue
+
+                # Filter by item_id if specified
+                if item_id is not None and deal_item_id != item_id:
                     continue
 
                 result.append(self._create_deal(schema))
@@ -120,18 +100,8 @@ class DealAPI:
         statuses: list[ItemDealStatuses] | None = None,
         direction: ItemDealDirections | None = None,
         user_id: str | None = None,
+        item_id: str | None = None,
     ) -> AsyncIterator[Deal]:
-        """Iterate over all deals.
-
-        Args:
-            cursor: Starting pagination cursor.
-            statuses: Filter by deal statuses.
-            direction: Filter by deal direction (IN/OUT).
-            user_id: Filter results by user ID.
-
-        Yields:
-            Deal entities.
-        """
         current_cursor = cursor
 
         while True:
@@ -146,9 +116,14 @@ class DealAPI:
 
             for schema in response.deals:
                 deal_user_id = schema.user.id if schema.user else None
+                deal_item_id = schema.item.id if schema.item else None
 
                 # Filter by user_id if specified
                 if user_id is not None and deal_user_id != user_id:
+                    continue
+
+                # Filter by item_id if specified
+                if item_id is not None and deal_item_id != item_id:
                     continue
 
                 yield self._create_deal(schema)
@@ -158,45 +133,82 @@ class DealAPI:
             current_cursor = response.page_info.end_cursor
 
     async def confirm(self, deal_id: str) -> Deal:
-        """Confirm a deal.
-
-        Args:
-            deal_id: Deal ID to confirm.
-
-        Returns:
-            Updated Deal entity.
-        """
+        """Confirm DONE work (for buyer)"""
         updated = await self._client._raw.deals.update_deal(deal_id, ItemDealStatuses.CONFIRMED)
         if updated is None:
-            # Fallback: refetch
             return await self.get(deal_id, force_refresh=True)
         return self._create_deal(updated)
 
     async def complete(self, deal_id: str) -> Deal:
-        """Complete a deal.
-
-        Args:
-            deal_id: Deal ID to confirm.
-
-        Returns:
-            Updated Deal entity.
-        """
+        """Mark PAID work as COMPLETED (sent), ask for confirmation (for seller)"""
         updated = await self._client._raw.deals.update_deal(deal_id, ItemDealStatuses.SENT)
         if updated is None:
-            # Fallback: refetch
             return await self.get(deal_id, force_refresh=True)
         return self._create_deal(updated)
 
     async def cancel(self, deal_id: str) -> Deal:
-        """Cancel a deal.
-
-        Args:
-            deal_id: Deal ID to cancel.
-
-        Returns:
-            Updated Deal entity.
-        """
+        """Reject PAID work and refund money (for seller)"""
         updated = await self._client._raw.deals.update_deal(deal_id, ItemDealStatuses.ROLLED_BACK)
         if updated is None:
             return await self.get(deal_id, force_refresh=True)
         return self._create_deal(updated)
+
+    def _extract_obtaining_fields(
+        self, fields: dict[str, str] | list | None
+    ) -> dict[str, str] | None:
+        """Extract obtaining fields from dict or list of GameCategoryDataField."""
+        if fields is None:
+            return None
+        if isinstance(fields, dict):
+            return fields
+        result = {}
+        for field in fields:
+            if hasattr(field, "_input_value") and field._input_value is not None:
+                result[field.id] = field._input_value
+        return result if result else None
+
+    async def create(
+        self,
+        item: str | Item,
+        *,
+        obtaining_fields: dict[str, str] | list | None = None,
+        comment: str | None = None,
+    ) -> Deal | None:
+        """Create a deal to buy an item.
+
+        Args:
+            item: Item entity or item_id string
+            obtaining_fields: Data fields for obtaining the item. Can be dict or list of GameCategoryDataField.
+            comment: Optional comment from buyer
+
+        Returns:
+            Created Deal entity or None if creation failed
+        """
+        from ..schemas.enums import TransactionProviderIds
+
+        # Extract item_id
+        item_id = item.id if isinstance(item, Item) else item
+
+        # Extract obtaining fields
+        fields_dict = self._extract_obtaining_fields(obtaining_fields)
+
+        # Create deal via raw API
+        transaction = await self._client._raw.deals.create_deal(
+            item_id=item_id,
+            transaction_provider_id=TransactionProviderIds.LOCAL,
+            obtaining_fields=fields_dict,
+            comment_from_buyer=comment,
+        )
+
+        if transaction is None:
+            return None
+
+        # Extract deal_id from transaction.props.dealId
+        deal_id = None
+        if transaction.props and isinstance(transaction.props, dict):
+            deal_id = transaction.props.get("dealId")
+
+        if deal_id:
+            return await self.get(deal_id)
+
+        return None

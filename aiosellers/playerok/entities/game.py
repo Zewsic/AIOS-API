@@ -1,5 +1,3 @@
-"""Game entity and related classes."""
-
 from __future__ import annotations
 
 import asyncio
@@ -21,15 +19,12 @@ if TYPE_CHECKING:  # pragma: no cover
 
 @dataclass(slots=True)
 class OptionValue:
-    """Option value entity."""
-
     name: str
     value: str
 
     _option: "GameCategoryOption" | None = field(default=None, repr=False, compare=False)
 
     def select(self) -> "GameCategoryOption":
-        """Select this value."""
         if self._option:
             return self._option.set_value(self)
         raise RuntimeError("OptionValue is not attached to an option")
@@ -37,8 +32,6 @@ class OptionValue:
 
 @dataclass(slots=True)
 class GameCategoryOption:
-    """Game category option entity."""
-
     id: str
     type: GameCategoryOptionTypes
     group_name: str
@@ -50,8 +43,6 @@ class GameCategoryOption:
     _client: Playerok | None = field(default=None, repr=False, init=False, compare=False)
 
     def set_value(self, value: int | str | bool | OptionValue | None) -> "GameCategoryOption":
-        """Set option value."""
-        # This is local logic, doesn't need API
         if hasattr(value, "value"):  # Handle OptionValue
             val = value.value
         else:
@@ -63,8 +54,6 @@ class GameCategoryOption:
 
 @dataclass(slots=True)
 class GameCategoryDataField:
-    """Game category data field entity."""
-
     id: str
     type: GameCategoryDataFieldTypes
     input_type: GameCategoryDataFieldInputTypes
@@ -74,15 +63,12 @@ class GameCategoryDataField:
     _input_value: str | None = None
 
     def set_value(self, value: str) -> "GameCategoryDataField":
-        """Set field value."""
         self._input_value = value
         return self
 
 
 @dataclass(slots=True)
 class GameCategoryAgreement:
-    """Game category agreement entity."""
-
     id: str
     description: str
     type: GameCategoryAgreementIconTypes
@@ -98,7 +84,6 @@ class GameCategoryAgreement:
         return self._client
 
     async def accept(self, *, skip_waiting: bool = False) -> bool:
-        """Accept this agreement."""
         result = await self._require_client().games.accept_agreement(self.id)
         if result and not skip_waiting:
             await asyncio.sleep(0.2)
@@ -107,8 +92,6 @@ class GameCategoryAgreement:
 
 @dataclass(slots=True)
 class GameCategoryInstruction:
-    """Game category instruction entity."""
-
     id: str
     text: str
 
@@ -120,8 +103,6 @@ class GameCategoryInstruction:
 
 @dataclass(slots=True)
 class GameCategoryObtainingType:
-    """Game category obtaining type entity."""
-
     id: str
     name: str
     description: str
@@ -136,7 +117,6 @@ class GameCategoryObtainingType:
         return self._client
 
     async def get_instructions(self, limit: int = 24) -> list[GameCategoryInstruction]:
-        """Get instructions for this obtaining type."""
         if not self.category_id:
             raise ValueError("Category ID missing")
         return await self._require_client().games.get_instructions(
@@ -144,13 +124,11 @@ class GameCategoryObtainingType:
         )
 
     async def get_data_fields(self) -> list[GameCategoryDataField]:
-        """Get data fields for this obtaining type."""
         if not self.category_id:
             raise ValueError("Category ID missing")
         return await self._require_client().games.get_data_fields(self.category_id, self.id)
 
     async def get_agreements(self, limit: int = 24) -> list[GameCategoryAgreement]:
-        """Get agreements for this obtaining type."""
         if not self.category_id:
             raise ValueError("Category ID missing")
         return await self._require_client().games.get_agreements(
@@ -160,14 +138,12 @@ class GameCategoryObtainingType:
 
 @dataclass(slots=True)
 class GameCategory:
-    """Game category entity."""
-
     id: str
     name: str
     slug: str
 
-    game: "Game" | None = field(repr=False, default=None)  # Reference to parent object
-    game_id: str | None = None  # Explicit ID
+    game: "Game" | None = field(repr=False, default=None)
+    game_id: str | None = None
 
     _client: Playerok | None = field(default=None, repr=False, init=False, compare=False)
 
@@ -177,22 +153,17 @@ class GameCategory:
         return self._client
 
     async def get_agreements(self, limit: int = 24) -> list[GameCategoryAgreement]:
-        """Get agreements for this category."""
         return await self._require_client().games.get_agreements(self.id, limit=limit)
 
     async def get_obtaining_types(self, limit: int = 24) -> list[GameCategoryObtainingType]:
-        """Get obtaining types for this category."""
         return await self._require_client().games.get_obtaining_types(self.id, limit=limit)
 
     async def get_options(self) -> list[GameCategoryOption]:
-        """Get options for this category."""
         return await self._require_client().games.get_category_options(self.id)
 
 
 @dataclass(slots=True)
 class Game:
-    """Game entity."""
-
     id: str
     name: str
     slug: str
@@ -211,5 +182,4 @@ class Game:
         return self._client
 
     async def refresh(self) -> "Game":
-        """Refresh game data."""
         return await self._require_client().games.get(id=self.id, force_refresh=True)

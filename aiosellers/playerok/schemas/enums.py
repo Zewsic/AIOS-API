@@ -135,6 +135,12 @@ class ItemDealDirections(StrEnum):
     OUT = "OUT"
 
 
+class ChatMessageDirection(StrEnum):
+    IN = "IN"
+    OUT = "OUT"
+    SYSTEM = "SYSTEM"
+
+
 class ChatTypes(StrEnum):
     PM = "PM"
     NOTIFICATIONS = "NOTIFICATIONS"

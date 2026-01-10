@@ -56,6 +56,30 @@ class Item(ApiModel):
     updated_at: datetime | None = Field(None, alias="updatedAt")
     deleted_at: datetime | None = Field(None, alias="deletedAt")
 
+    # Extracted from nested objects
+    category_id: str | None = Field(None, alias="category")
+    obtaining_type_id: str | None = Field(None, alias="obtainingType")
+
+    @model_validator(mode="before")
+    @classmethod
+    def _extract_nested_ids(cls, data):
+        if not isinstance(data, dict):
+            return data
+
+        # Extract category.id
+        if "category" in data:
+            category = data.get("category")
+            if isinstance(category, dict) and "id" in category:
+                data["category"] = category.get("id")
+
+        # Extract obtainingType.id
+        if "obtainingType" in data:
+            obtaining_type = data.get("obtainingType")
+            if isinstance(obtaining_type, dict) and "id" in obtaining_type:
+                data["obtainingType"] = obtaining_type.get("id")
+
+        return data
+
 
 class MyItem(Item):
     prev_price: int | None = Field(None, alias="prevPrice")

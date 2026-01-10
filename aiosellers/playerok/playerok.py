@@ -1,5 +1,3 @@
-"""High-level Playerok client."""
-
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -19,8 +17,6 @@ from .transport import PlayerokTransport
 
 @dataclass(slots=True)
 class _IdentityMaps:
-    """Container for identity maps."""
-
     users: IdentityMap[str, User]
     chats: IdentityMap[str, Chat]
     deals: IdentityMap[str, Deal]
@@ -29,22 +25,7 @@ class _IdentityMaps:
 
 
 class Playerok:
-    """
-    High-level Playerok client with modular API.
-
-    This class provides a clean, modular interface to the PlayerOK API
-    with identity map support and optional client attachment to entities.
-
-    Example:
-        >>> config = PlayerokClientConfig(access_token="...")
-        >>> async with Playerok(config) as client:
-        ...     chat = await client.chats.get("chat_id")
-        ...     await chat.send_text("Hello!")
-        ...
-        ...     deals = await client.deals.list(limit=10)
-        ...     for deal in deals:
-        ...         await deal.confirm()
-    """
+    """High-level Playerok client with modular API."""
 
     def __init__(self, config: PlayerokClientConfig | str | None = None) -> None:
         """Initialize Playerok client.
@@ -55,8 +36,7 @@ class Playerok:
                 - str: access token (creates default config)
                 - None: creates default config (expects PLAYEROK_ACCESS_TOKEN env var)
         """
-        # Support old API: Playerok(access_token="...")
-        if isinstance(config, str):
+        if isinstance(config, str):  # Access Token or Config
             config = PlayerokClientConfig(access_token=config)
         elif config is None:
             config = PlayerokClientConfig()
@@ -67,7 +47,6 @@ class Playerok:
         self._use_identity_map = config.use_identity_map
         self._me_id: str | None = None
 
-        # Identity maps for maintaining object identity
         if self._use_identity_map:
             self._identity_maps = _IdentityMaps(
                 users=IdentityMap(),
@@ -77,31 +56,26 @@ class Playerok:
                 items=IdentityMap(),
             )
 
-        # Modular API
         self.account = AccountAPI(self)
         self.chats = ChatAPI(self)
         self.deals = DealAPI(self)
         self.games = GameAPI(self)
         self.items = ItemAPI(self)
 
-        # Alias for account methods
         self.users = self.account
 
     async def __aenter__(self) -> Playerok:
-        """Async context manager entry."""
         await self.start()
         return self
 
     async def __aexit__(self, exc_type, exc, tb) -> None:  # noqa: ANN001
-        """Async context manager exit."""
         await self.close()
 
     async def start(self) -> None:
-        """Start the client (initialize transport and fetch account info)."""
+        """Start the client."""
         if self._transport is not None:
             return
 
-        # Initialize transport
         self._transport = PlayerokTransport(
             access_token=self._config.access_token,
             config=PlayerokConfig(
@@ -112,12 +86,11 @@ class Playerok:
         )
         self._raw = RawAPI(self._transport)
 
-        # Fetch current user ID
         me = await self._raw.account.get_me()
         self._me_id = me.id
 
     async def close(self) -> None:
-        """Close the client and cleanup resources."""
+        """Close the client."""
         if self._transport is None:
             return
 
@@ -125,7 +98,6 @@ class Playerok:
         self._transport = None
         self._raw = None
 
-        # Clear identity maps
         if self._use_identity_map:
             self._identity_maps.users.clear()
             self._identity_maps.chats.clear()

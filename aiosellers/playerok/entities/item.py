@@ -1,5 +1,3 @@
-"""Item entity."""
-
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -15,8 +13,6 @@ if TYPE_CHECKING:  # pragma: no cover
 
 @dataclass(slots=True)
 class Item:
-    """Item entity - represents a public item."""
-
     id: str
     slug: str | None = None
     name: str | None = None
@@ -27,12 +23,12 @@ class Item:
 
     game_id: str | None = None
     category_id: str | None = None
+    obtaining_type_id: str | None = None
     user_id: str | None = None
 
     _client: Playerok | None = field(default=None, repr=False, init=False, compare=False)
 
     def _require_client(self) -> Playerok:
-        """Ensure client is attached, raise error if not."""
         if self._client is None:
             raise RuntimeError(
                 f"{self.__class__.__name__} is not attached to a client. "
@@ -41,14 +37,11 @@ class Item:
         return self._client
 
     async def refresh(self) -> Item:
-        """Refresh item data from server."""
         return await self._require_client().items.get(self.id, force_refresh=True)
 
     async def get_category(self) -> GameCategory | None:
-        """Get category for this item."""
         if not self.category_id:
             return None
-        # Get game first to find category
         game = await self.get_game()
         if not game:
             return None
@@ -58,35 +51,72 @@ class Item:
         return None
 
     async def get_user(self) -> User | None:
-        """Get user (seller) of this item."""
         if not self.user_id:
             return None
         return await self._require_client().account.get_user(self.user_id)
 
     async def get_game(self) -> Game | None:
-        """Get game for this item."""
         if not self.game_id:
             return None
         return await self._require_client().games.get(id=self.game_id)
 
     async def get_deals(self, limit: int = 24) -> list:
-        """Get all deals for this item.
-
-        Returns:
-            List of Deal entities.
-        """
-        # Import here to avoid circular imports
         from .deal import Deal  # noqa: F401
 
         return await self._require_client().deals.list(
             limit=limit,
+            item_id=self.id,
+        )
+
+    async def get_obtaining_fields(self) -> list:
+        """Get OBTAINING_DATA fields for buying this item.
+
+        These are fields that buyer needs to fill when creating a deal
+        (e.g. game login, nickname, etc.)
+
+        Returns:
+            List of GameCategoryDataField with type OBTAINING_DATA
+        """
+        from ..schemas.enums import GameCategoryDataFieldTypes
+
+        if not self.category_id:
+            raise ValueError("Item has no category_id")
+        if not self.obtaining_type_id:
+            raise ValueError("Item has no obtaining_type_id")
+
+        # Explicitly request OBTAINING_DATA type fields (for buyer)
+        return await self._require_client().games.get_data_fields(
+            self.category_id,
+            self.obtaining_type_id,
+            type=GameCategoryDataFieldTypes.OBTAINING_DATA,
+        )
+
+    async def create_deal(
+        self,
+        *,
+        obtaining_fields: dict[str, str] | list | None = None,
+        comment: str | None = None,
+    ):
+        """Create a deal to buy this item.
+
+        Example:
+            # Get fields and fill them
+            fields = await item.get_obtaining_fields()
+            fields[0].set_value("my_login")
+            fields[1].set_value("my_password")
+
+            # Create deal
+            deal = await item.create_deal(obtaining_fields=fields, comment="Fast please!")
+        """
+        return await self._require_client().deals.create(
+            self,
+            obtaining_fields=obtaining_fields,
+            comment=comment,
         )
 
 
 @dataclass(slots=True)
 class MyItem(Item):
-    """MyItem entity - represents a user's own item with extended fields."""
-
     prev_price: int | None = None
     priority_price: int | None = None
     priority_position: int | None = None
@@ -104,20 +134,6 @@ class MyItem(Item):
         remove_attachments: list[str] | None = None,
         add_attachments: list[str] | None = None,
     ) -> MyItem:
-        """Update this item.
-
-        Args:
-            name: Item name.
-            price: Item price.
-            description: Item description.
-            options: Options as dict or list of GameCategoryOption objects.
-            data_fields: Data fields as dict or list of GameCategoryDataField objects.
-            remove_attachments: List of attachment IDs to remove.
-            add_attachments: List of file paths to add.
-
-        Returns:
-            Updated MyItem entity.
-        """
         return await self._require_client().items.update(
             self.id,
             name=name,
@@ -130,39 +146,13 @@ class MyItem(Item):
         )
 
     async def remove(self) -> bool:
-        """Remove this item.
-
-        Returns:
-            True if removed successfully.
-        """
         return await self._require_client().items.remove(self.id)
 
     async def publish(self, *, premium: bool = False) -> MyItem:
-        """Publish this item.
-
-        Args:
-            premium: If True, publish with premium priority. Default is normal priority.
-
-        Returns:
-            Updated MyItem entity.
-        """
         return await self._require_client().items.publish(self.id, premium=premium)
 
     async def set_normal_priority(self) -> MyItem:
-        """Set normal (lowest) priority for this item.
-
-        Returns:
-            Updated MyItem entity.
-        """
         return await self._require_client().items.set_normal_priority(self.id)
 
     async def set_premium_priority(self) -> MyItem:
-        """Set premium (highest) priority for this item.
-
-        Returns:
-            Updated MyItem entity.
-
-        Raises:
-            ValueError: If premium priority is not available for this item's category.
-        """
         return await self._require_client().items.set_premium_priority(self.id)

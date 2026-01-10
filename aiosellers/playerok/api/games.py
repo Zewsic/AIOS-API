@@ -1,5 +1,3 @@
-"""Games API module."""
-
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, AsyncIterator
@@ -15,6 +13,7 @@ from ..entities.game import (
     OptionValue,
 )
 from ..schemas import (
+    GameCategoryDataFieldTypes,
     GameCategoryOptionTypes,
     GameType,
 )
@@ -24,21 +23,50 @@ if TYPE_CHECKING:
 
 
 class GameAPI:
-    """Game-related API methods."""
-
     def __init__(self, client: Playerok) -> None:
         self._client = client
 
+    async def get_category(
+        self,
+        *,
+        id: str | None = None,
+        slug: str | None = None,
+        game_id: str | None = None,
+        force_refresh: bool = False,
+    ) -> GameCategory | None:
+        """Get a game category by id/slug/game_id.
+
+        Note:
+            This is a high-level wrapper over the raw service:
+            `client._raw.games.get_game_category(...)`.
+
+        Args:
+            id: Category ID
+            slug: Category slug
+            game_id: Game ID (optional filter, depending on PlayerOK API behavior)
+            force_refresh: Reserved for future caching. Currently has no effect.
+        """
+        _ = force_refresh  # reserved for future caching
+        schema = await self._client._raw.games.get_game_category(game_id=game_id, slug=slug, id=id)
+        if schema is None:
+            return None
+
+        category = GameCategory(
+            id=schema.id,
+            name=schema.name,
+            slug=schema.slug,
+            game_id=schema.game_id,
+            game=None,
+        )
+        category._client = self._client
+        return category
+
     def _create_game(self, schema) -> Game:
-        """Create Game entity from schema and attach client."""
-        # Check identity map first if ID is available
         if self._client._use_identity_map and hasattr(schema, "id"):
             cached = self._client._identity_maps.games.get(schema.id)
             if cached:
                 return cached
 
-        # Construct Game
-        # Note: We manually construct to avoid circular dependencies and weird from_schema logic in entities
         from ..entities.file import File
 
         game = Game(
@@ -70,17 +98,6 @@ class GameAPI:
     async def get(
         self, *, id: str | None = None, slug: str | None = None, force_refresh: bool = False
     ) -> Game | None:
-        """Get game by ID or slug.
-
-        Args:
-            id: Game ID to fetch.
-            slug: Game slug to fetch.
-            force_refresh: If True, bypass identity map.
-
-        Returns:
-            Game entity, or None if not found.
-        """
-        # Identity map check (only by ID for now, as map is keyed by ID)
         if id and not force_refresh and self._client._use_identity_map:
             cached = self._client._identity_maps.games.get(id)
             if cached:
@@ -100,7 +117,6 @@ class GameAPI:
         type: GameType | None = None,
         search: str | None = None,
     ) -> list[Game]:
-        """Get list of games."""
         result = []
         remain = limit
         current_cursor = cursor
@@ -133,7 +149,6 @@ class GameAPI:
         type: GameType | None = None,
         search: str | None = None,
     ) -> AsyncIterator[Game]:
-        """Iterate over all games."""
         current_cursor = cursor
 
         while True:
@@ -155,12 +170,10 @@ class GameAPI:
     # --- Sub-entity methods ---
 
     async def get_category_options(self, category_id: str) -> list[GameCategoryOption]:
-        """Get options for a game category."""
         raw_options = await self._client._raw.games.get_game_category_options(
             game_category_id=category_id
         )
 
-        # Convert schema to entity
         options_map = {}
         for option in raw_options:
             if option.field not in options_map:
@@ -177,7 +190,6 @@ class GameAPI:
 
             option_object = options_map[option.field]
 
-            # Logic for populating possible values
             if option.type is GameCategoryOptionTypes.SELECTOR:
                 option_object.possible_values.append(
                     OptionValue(value=option.value, name=option.label, _option=option_object)
@@ -202,7 +214,6 @@ class GameAPI:
     async def get_obtaining_types(
         self, category_id: str, *, cursor: str | None = None, limit: int = 24
     ) -> list[GameCategoryObtainingType]:
-        """Get obtaining types for a category."""
         result = []
         remain = limit
         current_cursor = cursor
@@ -240,7 +251,6 @@ class GameAPI:
         cursor: str | None = None,
         limit: int = 24,
     ) -> list[GameCategoryAgreement]:
-        """Get agreements for a category or obtaining type."""
         result = []
         remain = limit
         current_cursor = cursor
@@ -275,7 +285,6 @@ class GameAPI:
         return result
 
     async def accept_agreement(self, agreement_id: str) -> bool:
-        """Accept an agreement."""
         resp = await self._client._raw.games.accept_game_category_agreement(
             agreement_id, self._client._me_id
         )
@@ -289,7 +298,6 @@ class GameAPI:
         cursor: str | None = None,
         limit: int = 24,
     ) -> list[GameCategoryInstruction]:
-        """Get instructions."""
         result = []
         remain = limit
         current_cursor = cursor
@@ -321,9 +329,17 @@ class GameAPI:
         return result
 
     async def get_data_fields(
-        self, category_id: str, obtaining_type_id: str, *, cursor: str | None = None
+        self,
+        category_id: str,
+        obtaining_type_id: str,
+        *,
+        cursor: str | None = None,
+        type: GameCategoryDataFieldTypes | None = None,
     ) -> list[GameCategoryDataField]:
-        """Get data fields."""
+        # Default to ITEM_DATA for seller flow (creating items)
+        if type is None:
+            type = GameCategoryDataFieldTypes.ITEM_DATA
+
         result = []
         current_cursor = cursor
 
@@ -332,6 +348,7 @@ class GameAPI:
                 game_category_id=category_id,
                 obtaining_type_id=obtaining_type_id,
                 cursor=current_cursor,
+                type=type,
             )
             if response is None or not response.data_fields:
                 break

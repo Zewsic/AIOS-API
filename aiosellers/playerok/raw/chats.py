@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from ..core.utils import _dig, _raise_on_gql_errors
+from ..core.types import ImageInput
+from ..core.utils import _dig, _raise_on_gql_errors, prepare_image_file
 from ..graphql import GraphQLQuery as GQL
 from ..schemas import Chat, ChatList, ChatMessage, ChatMessageList, ChatStatuses, ChatTypes
 from ..transport import PlayerokTransport
@@ -73,23 +74,27 @@ class RawChatService:
         self,
         chat_id: str,
         text: str | None = None,
-        photo_path: str | None = None,
+        photo: ImageInput | None = None,
         mark_as_read: bool = False,
     ) -> ChatMessage | None:
-        if not text and not photo_path:
-            raise ValueError("Either 'text' or 'photo_path' must be provided.")
+        if not text and not photo:
+            raise ValueError("Either 'text' or 'photo' must be provided.")
 
         if mark_as_read:
             await self.mark_chat_as_read(chat_id=chat_id)
-        if text and photo_path:
-            await self.send_message(chat_id=chat_id, photo_path=photo_path)
+        if text and photo:
+            await self.send_message(chat_id=chat_id, photo=photo)
             return await self.send_message(chat_id=chat_id, text=text)  # can't send both at once
 
-        if photo_path:
+        if photo:
             payload = GQL.create_chat_message_with_photo(chat_id=chat_id, text=text)
-            with open(photo_path, "rb") as f:
-                files = {"1": f}
+            file_obj, should_close = await prepare_image_file(photo)
+            try:
+                files = {"1": file_obj}
                 response = await self._transport.request("post", "graphql", payload, files=files)
+            finally:
+                if should_close:
+                    file_obj.close()
         else:
             payload = GQL.create_chat_message(chat_id=chat_id, text=text)
             response = await self._transport.request("post", "graphql", payload)

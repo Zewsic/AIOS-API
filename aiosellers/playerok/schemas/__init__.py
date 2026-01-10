@@ -16,6 +16,7 @@ from .account import (
 from .enums import (
     BankCardTypes,
     ChatMessageButtonTypes,
+    ChatMessageDirection,
     ChatStatuses,
     ChatTypes,
     EventTypes,
@@ -103,6 +104,7 @@ __all__ = [
     "AccountProfile",
     "AccountStats",
     "UserProfile",
+    "ChatMessageDirection",
     "QueryID",
     "GameType",
     "ApiModel",

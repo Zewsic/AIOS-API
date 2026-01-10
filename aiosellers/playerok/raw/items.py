@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from ..core.exceptions import UnsupportedPaymentProvider
-from ..core.utils import _dig, _raise_on_gql_errors
+from ..core.types import ImageInput
+from ..core.utils import _dig, _raise_on_gql_errors, prepare_image_file
 from ..graphql import GraphQLQuery as GQL
 from ..schemas import (
     Item,
@@ -34,7 +35,7 @@ class RawItemsService:
         search: str | None = None,
         sort: ItemsSortOptions | None = None,
     ) -> ItemList | None:
-        if user_id is None and (game_id is None or category_id is None):
+        if not any([game_id, category_id, user_id]):
             raise ValueError("Can't get items without game_id and category_id, and without user_id")
 
         response = await self._transport.request(
@@ -85,7 +86,7 @@ class RawItemsService:
         description: str,
         options: dict[str, str],
         data_fields: dict[str, str],
-        attachments: list[str],
+        attachments: list[ImageInput],
     ) -> MyItem | None:
         payload_data_fields = [{"fieldId": k, "value": v} for k, v in data_fields.items()]
 
@@ -100,11 +101,18 @@ class RawItemsService:
             attachments_count=len(attachments),
         )
 
-        files = {str(i + 1): open(attachments[i], "rb") for i in range(len(attachments))}
+        files = {}
+        file_handles = []
         try:
+            for i, attachment in enumerate(attachments):
+                file_obj, should_close = await prepare_image_file(attachment)
+                files[str(i + 1)] = file_obj
+                if should_close:
+                    file_handles.append(file_obj)
+
             response = await self._transport.request("post", "graphql", payload, files=files)
         finally:
-            for f in files.values():
+            for f in file_handles:
                 f.close()
 
         raw = response.json()
@@ -124,7 +132,7 @@ class RawItemsService:
         options: dict[str, str] | None = None,
         data_fields: dict[str, str] | None = None,
         remove_attachments: list[str] | None = None,
-        add_attachments: list[str] | None = None,
+        add_attachments: list[ImageInput] | None = None,
     ) -> MyItem | None:
         payload_data_fields = (
             [{"fieldId": k, "value": v} for k, v in data_fields.items()]
@@ -143,18 +151,26 @@ class RawItemsService:
             attachments_count=len(add_attachments) if add_attachments else 0,
         )
 
-        files = (
-            {str(i + 1): open(add_attachments[i], "rb") for i in range(len(add_attachments))}
-            if add_attachments
-            else None
-        )
+        files = None
+        file_handles = []
+        if add_attachments:
+            files = {}
+            try:
+                for i, attachment in enumerate(add_attachments):
+                    file_obj, should_close = await prepare_image_file(attachment)
+                    files[str(i + 1)] = file_obj
+                    if should_close:
+                        file_handles.append(file_obj)
+            except Exception:
+                for f in file_handles:
+                    f.close()
+                raise
 
         try:
             response = await self._transport.request("post", "graphql", payload, files=files)
         finally:
-            if files:
-                for f in files.values():
-                    f.close()
+            for f in file_handles:
+                f.close()
 
         raw = response.json()
         _raise_on_gql_errors(raw)
