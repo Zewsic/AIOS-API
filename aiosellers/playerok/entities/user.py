@@ -1,9 +1,10 @@
+"""User entity."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
-from ..schemas.account import UserProfile as SchemaUserProfile
 from ..schemas.enums import UserType
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -12,6 +13,8 @@ if TYPE_CHECKING:  # pragma: no cover
 
 @dataclass(slots=True)
 class User:
+    """User entity with optional client attachment."""
+
     id: str
     username: str | None = None
     avatar_url: str | None = None
@@ -21,21 +24,17 @@ class User:
     rating: float | None = None
     reviews_count: int | None = None
 
-    _client: "Playerok" = field(repr=False, default=None)
+    _client: Playerok | None = field(default=None, repr=False, init=False, compare=False)
 
-    @classmethod
-    def _create(cls, *, client: "Playerok", id: str) -> "User":
-        return cls(id=id, _client=client)
+    def _require_client(self) -> Playerok:
+        """Ensure client is attached, raise error if not."""
+        if self._client is None:
+            raise RuntimeError(
+                f"{self.__class__.__name__} is not attached to a client. "
+                f"Use client.account.get_user() to fetch an active instance."
+            )
+        return self._client
 
-    def _merge_profile(self, profile: SchemaUserProfile) -> None:
-        self.username = profile.username
-        self.avatar_url = profile.avatar_url
-        self.role = profile.role
-        self.is_online = profile.is_online
-        self.is_blocked = profile.is_blocked
-        self.rating = profile.rating
-        self.reviews_count = profile.reviews_count
-
-    async def refresh(self) -> "User":
-        await self._client._push_user(self.id)
-        return self
+    async def refresh(self) -> User:
+        """Refresh user data from server."""
+        return await self._require_client().account.get_user(self.id, force_refresh=True)

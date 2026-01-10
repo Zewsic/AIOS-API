@@ -1,6 +1,18 @@
-from .chat import Chat
+"""Entity classes."""
+
+from .chat import Chat, ChatMessage
 from .deal import Deal
 from .file import File
+from .game import Game, GameCategory, GameCategoryObtainingType
 from .user import User
 
-__all__ = ["User", "Chat", "Deal", "File"]
+__all__ = [
+    "Chat",
+    "ChatMessage",
+    "Deal",
+    "File",
+    "Game",
+    "GameCategory",
+    "GameCategoryObtainingType",
+    "User",
+]

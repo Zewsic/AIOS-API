@@ -1,8 +1,10 @@
+"""Game entity and related classes."""
+
 from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, AsyncIterator
+from typing import TYPE_CHECKING
 
 from ..schemas import (
     GameCategoryAgreementIconTypes,
@@ -11,64 +13,58 @@ from ..schemas import (
     GameCategoryOptionTypes,
     GameType,
 )
-from ..schemas.games import (
-    Game as SchemaGame,
-)
-from ..schemas.games import (
-    GameCategory as SchemaGameCategory,
-)
-from ..schemas.games import (
-    GameCategoryAgreement as SchemaGameCategoryAgreement,
-)
-from ..schemas.games import (
-    GameCategoryInstruction as SchemaGameCategoryInstruction,
-)
-from ..schemas.games import (
-    GameCategoryObtainingType as SchemaGameCategoryObtainingType,
-)
-from . import File
 
-if TYPE_CHECKING:
-    from aiosellers.playerok import Playerok
+if TYPE_CHECKING:  # pragma: no cover
+    from ..playerok import Playerok
+    from .file import File
 
 
 @dataclass(slots=True)
 class OptionValue:
+    """Option value entity."""
+
     name: str
     value: str
 
-    _option: "GameCategoryOption"
+    _option: "GameCategoryOption" | None = field(default=None, repr=False, compare=False)
 
-    def select(self):
-        return self._option.set_value(self)
-
-    def __repr__(self):
-        return f"OptionSelectorValue(name='{self.name}', value='{self.value}')"
+    def select(self) -> "GameCategoryOption":
+        """Select this value."""
+        if self._option:
+            return self._option.set_value(self)
+        raise RuntimeError("OptionValue is not attached to an option")
 
 
 @dataclass(slots=True)
 class GameCategoryOption:
+    """Game category option entity."""
+
     id: str
     type: GameCategoryOptionTypes
     group_name: str
     slug: str
-    possible_values: list["OptionValue"] | list
+    possible_values: list[OptionValue]
+    category_id: str | None = None
 
     _input_value: int | str | bool | None = None
+    _client: Playerok | None = field(default=None, repr=False, init=False, compare=False)
 
-    def set_value(self, value: int | str | bool | "OptionValue" | None) -> GameCategoryOption:
-        if value in self.possible_values:
-            if type(value) is OptionValue:
-                self._input_value = value.value
-            else:
-                self._input_value = str(value).lower()
+    def set_value(self, value: int | str | bool | OptionValue | None) -> "GameCategoryOption":
+        """Set option value."""
+        # This is local logic, doesn't need API
+        if hasattr(value, "value"):  # Handle OptionValue
+            val = value.value
         else:
-            raise ValueError(f"Invalid value {value}")
+            val = str(value).lower() if value is not None else None
+
+        self._input_value = val
         return self
 
 
 @dataclass(slots=True)
 class GameCategoryDataField:
+    """Game category data field entity."""
+
     id: str
     type: GameCategoryDataFieldTypes
     input_type: GameCategoryDataFieldInputTypes
@@ -77,385 +73,143 @@ class GameCategoryDataField:
 
     _input_value: str | None = None
 
-    def set_value(self, value: str) -> GameCategoryDataField:
+    def set_value(self, value: str) -> "GameCategoryDataField":
+        """Set field value."""
         self._input_value = value
         return self
 
 
 @dataclass(slots=True)
 class GameCategoryAgreement:
+    """Game category agreement entity."""
+
     id: str
     description: str
     type: GameCategoryAgreementIconTypes
 
-    game_category: "GameCategory" = field(repr=False, default=None)
-    obtaining_type: "GameCategoryObtainingType" = field(repr=False, default=None)
-    _client: "Playerok" = field(repr=False, default=None)
+    category_id: str | None = None
+    obtaining_type_id: str | None = None
 
-    @classmethod
-    def from_schema(
-        cls,
-        f: SchemaGameCategoryAgreement,
-        game_category: "GameCategory" = None,
-        obtaining_type: "GameCategoryObtainingType" = None,
-        client: "Playerok" = None,
-    ) -> "GameCategoryAgreement":
-        return cls(
-            id=f.id,
-            description=f.description,
-            game_category=game_category,
-            obtaining_type=obtaining_type,
-            _client=client,
-            type=f.icon_type,
-        )
+    _client: Playerok | None = field(default=None, repr=False, init=False, compare=False)
 
-    async def accept(self, *, skip_waiting: bool = False) -> "GameCategoryAgreement":
-        "PLEASE CALL ASYNCIO WAIT AFTER EXECUTING"
-        resp = await self._client.raw.games.accept_game_category_agreement(self.id, self._client.id)
+    def _require_client(self) -> Playerok:
+        if self._client is None:
+            raise RuntimeError("Entity not attached to client")
+        return self._client
 
-        if not skip_waiting:
+    async def accept(self, *, skip_waiting: bool = False) -> bool:
+        """Accept this agreement."""
+        result = await self._require_client().games.accept_agreement(self.id)
+        if result and not skip_waiting:
             await asyncio.sleep(0.2)
-        return resp is not None
+        return result
 
 
 @dataclass(slots=True)
 class GameCategoryInstruction:
+    """Game category instruction entity."""
+
     id: str
     text: str
 
-    game_category: "GameCategory" = field(repr=False, default=None)
-    obtaining_type: GameCategoryObtainingType = field(repr=False, default=None)
+    category_id: str | None = None
+    obtaining_type_id: str | None = None
 
-    @classmethod
-    def from_schema(
-        cls,
-        f: SchemaGameCategoryInstruction,
-        game_category: "GameCategory" = None,
-        obtaining_type: "GameCategoryObtainingType" = None,
-    ) -> "GameCategoryInstruction":
-        return cls(id=f.id, text=f.text, game_category=game_category, obtaining_type=obtaining_type)
+    _client: Playerok | None = field(default=None, repr=False, init=False, compare=False)
 
 
 @dataclass(slots=True)
 class GameCategoryObtainingType:
+    """Game category obtaining type entity."""
+
     id: str
     name: str
     description: str
 
-    game_category: "GameCategory" = field(repr=False, default=None)
-    _client: "Playerok" = field(repr=False, default=None)
+    category_id: str | None = None
 
-    @classmethod
-    def from_schema(
-        cls,
-        f: SchemaGameCategoryObtainingType,
-        game_category: "GameCategory" = None,
-        client: "Playerok" = None,
-    ) -> "GameCategoryObtainingType":
-        return cls(
-            id=f.id,
-            name=f.name,
-            description=f.description,
-            game_category=game_category,
-            _client=client,
+    _client: Playerok | None = field(default=None, repr=False, init=False, compare=False)
+
+    def _require_client(self) -> Playerok:
+        if self._client is None:
+            raise RuntimeError("Entity not attached to client")
+        return self._client
+
+    async def get_instructions(self, limit: int = 24) -> list[GameCategoryInstruction]:
+        """Get instructions for this obtaining type."""
+        if not self.category_id:
+            raise ValueError("Category ID missing")
+        return await self._require_client().games.get_instructions(
+            self.category_id, self.id, limit=limit
         )
 
-    async def iter_instructions(
-        self,
-        *,
-        cursor: str | None = None,
-    ) -> AsyncIterator[GameCategoryInstruction]:
-        while True:
-            instructions = await self._client.raw.games.get_game_category_instructions(
-                game_category_id=self.id,
-                obtaining_type_id=self.id,
-                cursor=cursor,
-            )
-            if instructions is None:
-                return
-            for arg in instructions.instructions:
-                yield GameCategoryInstruction.from_schema(
-                    arg, game_category=self.game_category, obtaining_type=self
-                )
-            if not instructions.page_info.has_next_page:
-                return
-            cursor = instructions.page_info.end_cursor
-
-    async def get_instructions(
-        self, *, count: int = 24, cursor: str | None = None
-    ) -> list[GameCategoryInstruction]:
-        remain = count
-        resp = []
-        while remain > 0:
-            instructions = await self._client.raw.games.get_game_category_instructions(
-                game_category_id=self.game_category.id,
-                obtaining_type_id=self.id,
-                cursor=cursor,
-            )
-            if instructions is None:
-                break
-            for arg in instructions.instructions:
-                resp.append(
-                    GameCategoryInstruction.from_schema(
-                        arg, game_category=self.game_category, obtaining_type=self
-                    )
-                )
-            if not instructions.page_info.has_next_page:
-                break
-            cursor = instructions.page_info.end_cursor
-            remain -= min(24, remain)
-
-        return resp
-
     async def get_data_fields(self) -> list[GameCategoryDataField]:
-        resp = []
-        cursor = None
-        while True:
-            data_fields = await self._client.raw.games.get_game_category_data_fields(
-                game_category_id=self.game_category.id,
-                obtaining_type_id=self.id,
-                cursor=cursor,
-            )
-            if data_fields is None:
-                break
-            for arg in data_fields.data_fields:
-                resp.append(
-                    GameCategoryDataField(
-                        id=arg.id,
-                        type=arg.type,
-                        input_type=arg.input_type,
-                        name=arg.label,
-                        required=arg.required,
-                    )
-                )
-            if not data_fields.page_info.has_next_page:
-                break
-            cursor = data_fields.page_info.end_cursor
+        """Get data fields for this obtaining type."""
+        if not self.category_id:
+            raise ValueError("Category ID missing")
+        return await self._require_client().games.get_data_fields(self.category_id, self.id)
 
-        return resp
-
-    async def iter_agreements(
-        self,
-        *,
-        cursor: str | None = None,
-    ) -> AsyncIterator[GameCategoryAgreement]:
-        while True:
-            agreements = await self._client.raw.games.get_game_category_agreements(
-                game_category_id=self.id,
-                obtaining_type_id=self.id,
-                user_id=self._client.id,
-                cursor=cursor,
-            )
-            if agreements is None:
-                return
-            for arg in agreements.agreements:
-                yield GameCategoryAgreement.from_schema(
-                    arg, game_category=self.game_category, obtaining_type=self, client=self._client
-                )
-            if not agreements.page_info.has_next_page:
-                return
-            cursor = agreements.page_info.end_cursor
-
-    async def get_agreements(
-        self, *, count: int = 24, cursor: str | None = None
-    ) -> list[GameCategoryAgreement]:
-        remain = count
-        resp = []
-        while remain > 0:
-            agreements = await self._client.raw.games.get_game_category_agreements(
-                game_category_id=self.id,
-                obtaining_type_id=self.id,
-                user_id=self._client.id,
-                cursor=cursor,
-            )
-            if agreements is None:
-                break
-            for arg in agreements.agreements:
-                resp.append(
-                    GameCategoryAgreement.from_schema(
-                        arg,
-                        game_category=self.game_category,
-                        obtaining_type=self,
-                        client=self._client,
-                    )
-                )
-            if not agreements.page_info.has_next_page:
-                break
-            cursor = agreements.page_info.end_cursor
-            remain -= min(24, remain)
-
-        return resp
+    async def get_agreements(self, limit: int = 24) -> list[GameCategoryAgreement]:
+        """Get agreements for this obtaining type."""
+        if not self.category_id:
+            raise ValueError("Category ID missing")
+        return await self._require_client().games.get_agreements(
+            self.category_id, obtaining_type_id=self.id, limit=limit
+        )
 
 
 @dataclass(slots=True)
 class GameCategory:
+    """Game category entity."""
+
     id: str
     name: str
     slug: str
 
-    game: "Game" = field(repr=False, default=None)
-    _client: "Playerok" = field(repr=False, default=None)
+    game: "Game" | None = field(repr=False, default=None)  # Reference to parent object
+    game_id: str | None = None  # Explicit ID
 
-    @classmethod
-    def from_schema(
-        cls, f: SchemaGameCategory, game: "Game" = None, client: "Playerok" = None
-    ) -> "GameCategory":
-        return cls(id=f.id, name=f.name, slug=f.slug, game=game, _client=client)
+    _client: Playerok | None = field(default=None, repr=False, init=False, compare=False)
 
-    async def iter_agreements(
-        self,
-        *,
-        cursor: str | None = None,
-    ) -> AsyncIterator[GameCategoryAgreement]:
-        while True:
-            agreements = await self._client.raw.games.get_game_category_agreements(
-                game_category_id=self.id,
-                user_id=self._client.id,
-                cursor=cursor,
-            )
-            if agreements is None:
-                return
-            for arg in agreements.agreements:
-                yield GameCategoryAgreement.from_schema(
-                    arg, game_category=self, client=self._client
-                )
-            if not agreements.page_info.has_next_page:
-                return
-            cursor = agreements.page_info.end_cursor
+    def _require_client(self) -> Playerok:
+        if self._client is None:
+            raise RuntimeError("Entity not attached to client")
+        return self._client
 
-    async def get_agreements(
-        self, *, count: int = 24, cursor: str | None = None
-    ) -> list[GameCategoryAgreement]:
-        remain = count
-        resp = []
-        while remain > 0:
-            agreements = await self._client.raw.games.get_game_category_agreements(
-                game_category_id=self.id,
-                user_id=self._client.id,
-                cursor=cursor,
-            )
-            if agreements is None:
-                break
-            for arg in agreements.agreements:
-                resp.append(
-                    GameCategoryAgreement.from_schema(arg, game_category=self, client=self._client)
-                )
-            if not agreements.page_info.has_next_page:
-                break
-            cursor = agreements.page_info.end_cursor
-            remain -= min(24, remain)
+    async def get_agreements(self, limit: int = 24) -> list[GameCategoryAgreement]:
+        """Get agreements for this category."""
+        return await self._require_client().games.get_agreements(self.id, limit=limit)
 
-        return resp
-
-    async def iter_obtaining_types(
-        self,
-        *,
-        cursor: str | None = None,
-    ) -> AsyncIterator[GameCategoryObtainingType]:
-        while True:
-            obtaining_types = await self._client.raw.games.get_game_category_obtaining_types(
-                game_category_id=self.id,
-                cursor=cursor,
-            )
-            if obtaining_types is None:
-                return
-            for arg in obtaining_types.obtaining_types:
-                yield GameCategoryObtainingType.from_schema(
-                    arg, game_category=self, client=self._client
-                )
-            if not obtaining_types.page_info.has_next_page:
-                return
-            cursor = obtaining_types.page_info.end_cursor
-
-    async def get_obtaining_types(
-        self, *, count: int = 24, cursor: str | None = None
-    ) -> list[GameCategoryObtainingType]:
-        remain = count
-        resp = []
-        while remain > 0:
-            obtaining_types = await self._client.raw.games.get_game_category_obtaining_types(
-                game_category_id=self.id,
-                cursor=cursor,
-            )
-            if obtaining_types is None:
-                break
-            for arg in obtaining_types.obtaining_types:
-                resp.append(
-                    GameCategoryObtainingType.from_schema(
-                        arg, game_category=self, client=self._client
-                    )
-                )
-            if not obtaining_types.page_info.has_next_page:
-                break
-            cursor = obtaining_types.page_info.end_cursor
-            remain -= min(24, remain)
-
-        return resp
+    async def get_obtaining_types(self, limit: int = 24) -> list[GameCategoryObtainingType]:
+        """Get obtaining types for this category."""
+        return await self._require_client().games.get_obtaining_types(self.id, limit=limit)
 
     async def get_options(self) -> list[GameCategoryOption]:
-        options = {}
-        raw_options = await self._client.raw.games.get_game_category_options(
-            game_category_id=self.id
-        )
-        for option in raw_options:
-            if option.field not in options:
-                options[option.field] = GameCategoryOption(
-                    option.id,
-                    type=option.type,
-                    group_name=option.group,
-                    slug=option.field,
-                    possible_values=[],
-                )
-
-            option_object = options[option.field]
-            if option.type is GameCategoryOptionTypes.SELECTOR:
-                option_object.possible_values.append(
-                    OptionValue(value=option.value, name=option.label, _option=option_object)
-                )
-            elif option.type is GameCategoryOptionTypes.RANGE:
-                minimal_value = min(0, option.value_range_limit.min or 0)
-                maximal_value = max(0, option.value_range_limit.max or 0)
-                for i in range(minimal_value, maximal_value):
-                    option_object.possible_values.append(
-                        OptionValue(value=str(i), name=str(i), _option=option_object)
-                    )
-            elif option.type is GameCategoryOptionTypes.SWITCH:
-                option_object.possible_values.append(
-                    OptionValue(value="false", name="No", _option=option_object)
-                )
-                option_object.possible_values.append(
-                    OptionValue(value="true", name="Yes", _option=option_object)
-                )
-            else:
-                raise TypeError(f"Unknown option type: {option.type}")
-
-        return list(options.values())
+        """Get options for this category."""
+        return await self._require_client().games.get_category_options(self.id)
 
 
 @dataclass(slots=True)
 class Game:
+    """Game entity."""
+
     id: str
     name: str
     slug: str
-    logo: File | None
     categories: list[GameCategory]
     type: GameType = GameType.GAME
+    logo: File | None = None
 
-    _client: "Playerok" = field(repr=False, default=None)
+    _client: Playerok | None = field(default=None, repr=False, init=False, compare=False)
 
-    @classmethod
-    def from_schema(cls, f: SchemaGame, client: "Playerok" = None) -> "Game":
-        game = cls(
-            id=f.id,
-            name=f.name,
-            categories=[],
-            type=f.type,
-            slug=f.slug,
-            logo=File.from_schema(f.logo) if f.logo else None,
-            _client=client,
-        )
+    def _require_client(self) -> Playerok:
+        if self._client is None:
+            raise RuntimeError(
+                f"{self.__class__.__name__} is not attached to a client. "
+                f"Use client.games.get() to fetch an active instance."
+            )
+        return self._client
 
-        for category in f.categories:
-            game.categories.append(GameCategory.from_schema(category, game=game, client=client))
-
-        return game
+    async def refresh(self) -> "Game":
+        """Refresh game data."""
+        return await self._require_client().games.get(id=self.id, force_refresh=True)

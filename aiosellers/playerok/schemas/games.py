@@ -102,7 +102,7 @@ class GameCategoryAgreementList(ApiModel):
 class GameCategoryObtainingType(ApiModel):
     id: str = Field(..., alias="id")
     name: str = Field(..., alias="name")
-    description: str = Field(..., alias="description")
+    description: str | None = Field(None, alias="description")
 
     game_category_id: str = Field(..., alias="gameCategoryId")
     no_comment_from_buyer: bool = Field(..., alias="noCommentFromBuyer")

@@ -194,14 +194,12 @@ class GameCategoryAgreementIconTypes(StrEnum):
 
 
 class GameCategoryOptionTypes(StrEnum):
-    # TODO: Add another types of options
     SELECTOR = "SELECTOR"
     SWITCH = "SWITCH"
     RANGE = "RANGE"
 
 
 class GameCategoryDataFieldInputTypes(StrEnum):
-    # Maybe, another obtaining types can be exists
     INPUT = "INPUT"
     TEXTAREA = "TEXTAREA"
 

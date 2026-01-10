@@ -74,7 +74,7 @@ class GraphQLQuery:
             operation_name="games",
             variables={
                 "pagination": {"first": count, "after": cursor},
-                "filter": {"type": type.name, "name": name},
+                "filter": {"type": type.name if type else None, "name": name},
             },
             sha256_hash=QueryID.games.value,
         )

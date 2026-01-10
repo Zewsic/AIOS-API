@@ -1,142 +1,72 @@
+"""Chat entity and related classes."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import TYPE_CHECKING, AsyncIterator
+from pathlib import Path
+from typing import TYPE_CHECKING
 
 from ..schemas import ChatTypes
-from ..schemas.chats import Chat as SchemaChat
-from ..schemas.chats import ChatMessage as SchemaChatMessage
 
 if TYPE_CHECKING:  # pragma: no cover
     from ..playerok import Playerok
     from .file import File
-    from .user import User
 
 
 @dataclass(slots=True)
 class ChatMessage:
+    """Chat message entity."""
+
     id: str
     sent_at: datetime
     is_read: bool
     text: str | None = None
     file: File | None = None
-
-    _client: "Playerok" = field(repr=False, default=None)
-    _chat_id: str | None = field(repr=False, default=None)
-    _user_id: str | None = field(repr=False, default=None)
-
-    @classmethod
-    def from_schema(cls, client: "Playerok", f: SchemaChatMessage, chat_id: str) -> ChatMessage:
-        from .file import File
-
-        return cls(
-            id=f.id,
-            sent_at=f.created_at,
-            is_read=f.is_read,
-            text=f.text,
-            file=File.from_schema(f.file) if f.file else None,
-            _client=client,
-            _chat_id=chat_id,
-            _user_id=f.user.id if f.user else None,
-        )
-
-    @property
-    def user(self) -> "User | None":
-        if not self._user_id:
-            return None
-        return self._client._get_user_identity(self._user_id)
-
-    @property
-    def chat(self) -> "Chat | None":
-        if not self._chat_id:
-            return None
-        return self._client._get_chat_identity(self._chat_id)
+    user_id: str | None = None
+    chat_id: str | None = None
 
 
 @dataclass(slots=True)
 class Chat:
+    """Chat entity with optional client attachment."""
+
     id: str
     type: ChatTypes = ChatTypes.PM
     unread_messages_counter: int | None = None
+    user_id: str | None = None
 
-    _client: "Playerok" = field(repr=False, default=None)
-    _user_id: str | None = field(repr=False, default=None)
+    _client: Playerok | None = field(default=None, repr=False, init=False, compare=False)
 
-    @classmethod
-    def _create(cls, *, client: "Playerok", id: str) -> "Chat":
-        return cls(id=id, _client=client)
+    def _require_client(self) -> Playerok:
+        """Ensure client is attached, raise error if not."""
+        if self._client is None:
+            raise RuntimeError(
+                f"{self.__class__.__name__} is not attached to a client. "
+                f"Use client.chats.get() to fetch an active instance."
+            )
+        return self._client
 
-    async def refresh(self) -> "Chat":
-        await self._client._push_chat(self.id)
-        return self
-
-    def _merge_schema(self, chat: SchemaChat) -> None:
-        self.unread_messages_counter = chat.unread_messages_counter
-        self.type = chat.type
-
-        # PM chat: "participants" contains both users, pick a non-self if possible.
-        if chat.users:
-            me_id = self._client.id
-            other = None
-            for u in chat.users:
-                if me_id and u.id != me_id:
-                    other = u
-                    break
-            if other is None:
-                other = chat.users[0]
-            self._user_id = other.id
-            self._client._push_user_profile(other)
-
-    @property
-    def user(self) -> "User | None":
-        if not self._user_id:
-            return None
-        return self._client._get_user_identity(self._user_id)
-
-    async def send_photo(self, path: str, *, mark_as_read: bool = False) -> None:
-        await self._client.raw.chats.send_message(
-            self.id, photo_path=path, mark_as_read=mark_as_read
+    async def send_text(self, text: str, *, mark_as_read: bool = False) -> ChatMessage:
+        """Send text message to this chat."""
+        return await self._require_client().chats.send_message(
+            self.id, text=text, mark_as_read=mark_as_read
         )
 
-    async def send_text(self, text: str, *, mark_as_read: bool = False) -> None:
-        await self._client.raw.chats.send_message(self.id, text=text, mark_as_read=mark_as_read)
+    async def send_photo(self, path: str | Path, *, mark_as_read: bool = False) -> ChatMessage:
+        """Send photo to this chat."""
+        return await self._require_client().chats.send_message(
+            self.id, photo=path, mark_as_read=mark_as_read
+        )
 
-    async def iter_messages(
-        self,
-        *,
-        cursor: str | None = None,
-    ) -> AsyncIterator[ChatMessage]:
-        while True:
-            messages = await self._client.raw.chats.get_chat_messages(
-                chat_id=self.id,
-                after_cursor=cursor,
-            )
-            if messages is None:
-                return
-            for message in messages.messages:
-                yield ChatMessage.from_schema(self._client, message, self.id)
-            if not messages.page_info.has_next_page:
-                break
-            cursor = messages.page_info.end_cursor
+    async def mark_as_read(self) -> None:
+        """Mark this chat as read."""
+        await self._require_client().chats.mark_as_read(self.id)
 
-    async def get_messages(
-        self, *, count: int = 24, cursor: str | None = None
-    ) -> list[ChatMessage]:
-        remain = count
-        resp = []
-        while remain > 0:
-            messages = await self._client.raw.chats.get_chat_messages(
-                chat_id=self.id,
-                after_cursor=cursor,
-            )
-            if messages is None:
-                break
-            for message in messages.messages:
-                resp.append(ChatMessage.from_schema(self._client, message, self.id))
-            if not messages.page_info.has_next_page:
-                break
-            cursor = messages.page_info.end_cursor
-            remain -= min(24, remain)
+    async def get_messages(self, limit: int = 50) -> list[ChatMessage]:
+        """Get messages from this chat."""
+        return await self._require_client().chats.messages.list(self.id, limit=limit)
 
-        return resp
+    async def refresh(self) -> Chat:
+        """Refresh chat data from server."""
+        return await self._require_client().chats.get(self.id, force_refresh=True)
