@@ -110,9 +110,8 @@ async with Playerok() as client:
 
 ```python
 async with Playerok() as client:
-    items = await client.items.list_self(limit=50)
 
-    for item in items:
+    async for item in client.items.list_self():
         pos = item.priority_position or 999
         if pos < 15:
             await item.set_premium_priority()
@@ -125,16 +124,14 @@ async with Playerok() as client:
 from aiosellers.playerok.schemas import ItemDealStatuses
 
 async with Playerok() as client:
-    user = await client.account.get_user(user_id="...")
-
     # Send all paid orders
-    paid = await client.deals.list(statuses=[ItemDealStatuses.PAID], user_id=user.id)
+    paid = await client.deals.list(statuses=[ItemDealStatuses.PAID])
     for deal in paid:
         await deal.complete()
         print(f"Sent: {deal.id}")
 
     # Confirm all sent orders
-    sent = await client.deals.list(statuses=[ItemDealStatuses.SENT], user_id=user.id)
+    sent = await client.deals.list(statuses=[ItemDealStatuses.SENT])
     for deal in sent:
         await deal.confirm()
         print(f"Confirmed: {deal.id}")
