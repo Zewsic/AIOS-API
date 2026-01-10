@@ -217,13 +217,20 @@ class GraphQLQuery:
         search: str | None = None,
         sort: ItemsSortOptions | None = None,
     ) -> dict[str, Any]:
-        filters = {
-            "gameId": game_id,
-            "gameCategoryId": category_id,
-            "userId": user_id,
-            "status": ["APPROVED", "PENDING_MODERATION", "PENDING_APPROVAL"],
-            "withOfficial": False,
-        }
+
+        if user_id is None:
+            filters = {
+                "gameId": game_id,
+                "gameCategoryId": category_id,
+                "status": ["APPROVED", "PENDING_MODERATION", "PENDING_APPROVAL"],
+                "withOfficial": False,
+            }
+        else:
+            filters = {
+                "userId": user_id,
+                "status": ["APPROVED"],
+                "withOfficial": False,
+            }
         sort_field = None
 
         if minimal_price or maximal_price:

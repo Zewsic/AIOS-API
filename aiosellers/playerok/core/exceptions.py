@@ -8,3 +8,7 @@ class Unauthorized(Exception):
 
 class GraphQLError(Exception):
     pass
+
+
+class UnsupportedPaymentProvider(Exception):
+    pass

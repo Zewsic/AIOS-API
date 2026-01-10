@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from ..core.exceptions import UnsupportedPaymentProvider
 from ..core.utils import _dig, _raise_on_gql_errors
 from ..graphql import GraphQLQuery as GQL
 from ..schemas import (
@@ -23,6 +24,7 @@ class RawItemsService:
         count: int = 24,
         cursor: str | None = None,
         game_id: str | None = None,
+        user_id: str | None = None,
         category_id: str | None = None,
         minimal_price: int | None = None,
         maximal_price: int | None = None,
@@ -32,8 +34,8 @@ class RawItemsService:
         search: str | None = None,
         sort: ItemsSortOptions | None = None,
     ) -> ItemList | None:
-        if game_id is None or category_id is None:
-            raise ValueError("Can't get items without game_id and category_id")
+        if user_id is None and (game_id is None or category_id is None):
+            raise ValueError("Can't get items without game_id and category_id, and without user_id")
 
         response = await self._transport.request(
             "post",
@@ -42,6 +44,7 @@ class RawItemsService:
                 count=count,
                 cursor=cursor,
                 game_id=game_id,
+                user_id=user_id,
                 category_id=category_id,
                 minimal_price=minimal_price,
                 maximal_price=maximal_price,
@@ -173,6 +176,10 @@ class RawItemsService:
         priority_status_id: str,
         transaction_provider_id: TransactionProviderIds = TransactionProviderIds.LOCAL,
     ) -> MyItem | None:
+        if transaction_provider_id != TransactionProviderIds.LOCAL:
+            raise UnsupportedPaymentProvider(
+                f"Only LOCAL payment provider is supported, got {transaction_provider_id}"
+            )
         response = await self._transport.request(
             "post",
             "graphql",
@@ -209,6 +216,10 @@ class RawItemsService:
         payment_method_id: TransactionPaymentMethodIds | None = None,
         transaction_provider_id: TransactionProviderIds = TransactionProviderIds.LOCAL,
     ) -> MyItem | None:
+        if transaction_provider_id != TransactionProviderIds.LOCAL:
+            raise UnsupportedPaymentProvider(
+                f"Only LOCAL payment provider is supported, got {transaction_provider_id}"
+            )
         response = await self._transport.request(
             "post",
             "graphql",

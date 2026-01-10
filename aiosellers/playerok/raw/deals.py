@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from ..core.exceptions import UnsupportedPaymentProvider
 from ..core.utils import _dig, _raise_on_gql_errors
 from ..graphql import GraphQLQuery as GQL
 from ..schemas import (
@@ -75,6 +76,10 @@ class RawDealsService:
         comment_from_buyer: str | None = None,
         payment_method_id: TransactionPaymentMethodIds | None = None,
     ) -> Transaction | None:
+        if transaction_provider_id != TransactionProviderIds.LOCAL:
+            raise UnsupportedPaymentProvider(
+                f"Only LOCAL payment provider is supported, got {transaction_provider_id}"
+            )
         payload_obtaining_fields = (
             [{"fieldId": k, "value": v} for k, v in obtaining_fields.items()]
             if obtaining_fields

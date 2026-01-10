@@ -4,13 +4,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .api import AccountAPI, ChatAPI, DealAPI, GameAPI
+from .api import AccountAPI, ChatAPI, DealAPI, GameAPI, ItemAPI
 from .client_config import PlayerokClientConfig
 from .core.config import PlayerokConfig
 from .core.identity_map import IdentityMap
 from .entities.chat import Chat
 from .entities.deal import Deal
 from .entities.game import Game
+from .entities.item import Item, MyItem
 from .entities.user import User
 from .raw import RawAPI
 from .transport import PlayerokTransport
@@ -24,6 +25,7 @@ class _IdentityMaps:
     chats: IdentityMap[str, Chat]
     deals: IdentityMap[str, Deal]
     games: IdentityMap[str, Game]
+    items: IdentityMap[str, Item | MyItem]
 
 
 class Playerok:
@@ -72,6 +74,7 @@ class Playerok:
                 chats=IdentityMap(),
                 deals=IdentityMap(),
                 games=IdentityMap(),
+                items=IdentityMap(),
             )
 
         # Modular API
@@ -79,6 +82,10 @@ class Playerok:
         self.chats = ChatAPI(self)
         self.deals = DealAPI(self)
         self.games = GameAPI(self)
+        self.items = ItemAPI(self)
+
+        # Alias for account methods
+        self.users = self.account
 
     async def __aenter__(self) -> Playerok:
         """Async context manager entry."""
@@ -124,3 +131,4 @@ class Playerok:
             self._identity_maps.chats.clear()
             self._identity_maps.deals.clear()
             self._identity_maps.games.clear()
+            self._identity_maps.items.clear()

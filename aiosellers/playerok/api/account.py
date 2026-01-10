@@ -37,27 +37,40 @@ class AccountAPI:
         me = await self.me()
         return await self._client._raw.account.get_account(me.username)
 
-    async def get_user(self, user_id: str, *, force_refresh: bool = False) -> User:
-        """Get user by ID.
+    async def get_user(
+        self,
+        user_id: str | None = None,
+        *,
+        username: str | None = None,
+        force_refresh: bool = False,
+    ) -> User:
+        """Get user by ID or username.
 
         Args:
             user_id: User ID to fetch.
+            username: Username to fetch.
             force_refresh: If True, bypass identity map and fetch fresh data.
 
         Returns:
             User entity with client attached.
         """
-        # Check identity map first
-        if not force_refresh and self._client._use_identity_map:
+        if user_id is None and username is None:
+            raise ValueError("Either user_id or username must be provided")
+
+        # Check identity map first (only by ID)
+        if user_id and not force_refresh and self._client._use_identity_map:
             cached = self._client._identity_maps.users.get(user_id)
             if cached:
                 return cached
 
         # Fetch from API
-        profile = await self._client._raw.account.get_user(id=user_id)
+        profile = await self._client._raw.account.get_user(id=user_id, username=username)
         if profile is None:
-            # Create stub user with just ID
-            user = User(id=user_id)
+            if user_id:
+                # Create stub user with just ID
+                user = User(id=user_id)
+            else:
+                raise ValueError(f"User with username '{username}' not found")
         else:
             user = User(
                 id=profile.id,
@@ -75,6 +88,6 @@ class AccountAPI:
 
         # Store in identity map
         if self._client._use_identity_map:
-            self._client._identity_maps.users.set(user_id, user)
+            self._client._identity_maps.users.set(user.id, user)
 
         return user

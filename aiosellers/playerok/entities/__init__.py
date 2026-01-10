@@ -4,6 +4,7 @@ from .chat import Chat, ChatMessage
 from .deal import Deal
 from .file import File
 from .game import Game, GameCategory, GameCategoryObtainingType
+from .item import Item, MyItem
 from .user import User
 
 __all__ = [
@@ -14,5 +15,7 @@ __all__ = [
     "Game",
     "GameCategory",
     "GameCategoryObtainingType",
+    "Item",
+    "MyItem",
     "User",
 ]

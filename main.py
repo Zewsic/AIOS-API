@@ -19,6 +19,13 @@ async def main() -> None:
     )
 
     async with Playerok(config) as client:
+        # Test some features
+
+        async for item in client.items.iter_self():
+            print(item)
+
+        return
+
         # === Account API ===
         me = await client.account.me()
         profile = await client.account.profile()
@@ -44,7 +51,6 @@ async def main() -> None:
                 print(f"    Deals: {len(deals)}")
                 for deal in deals:
                     print(f"      Deal {deal.id} - Status: {deal.status}")
-        return
 
         # Get specific chat and use entity methods
         if chats:

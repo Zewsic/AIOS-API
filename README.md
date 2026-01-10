@@ -38,7 +38,7 @@ uv add aiosellers
 | **Account Management**  | ✅ Ready          | ✅ Ready           |
 | **Games Metadata**      | ✅ Ready          | ✅ Ready           |
 | **Items Management**    | ✅ Ready          | In Development    |
-| **Orders**              | ✅ Ready          | In Development    |
+| **Orders**              | ✅ Ready          | ✅ Ready           |
 | **Topup / Withdrawals** | ✅ Ready          | Planned           |
 | **Messaging**           | ✅ Ready          | ✅ Ready           |
 | **Event listeners**     | Planned          | Planned           |

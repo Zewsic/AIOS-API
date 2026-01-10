@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from ..core.exceptions import UnsupportedPaymentProvider
 from ..core.utils import _dig, _raise_on_gql_errors
 from ..graphql import GraphQLQuery as GQL
 from ..schemas import (
@@ -103,6 +104,10 @@ class RawTransactionService:
         payment_method_id: TransactionPaymentMethodIds | None = None,
         sbp_bank_member_id: str | None = None,
     ) -> Transaction:
+        if provider != TransactionProviderIds.LOCAL:
+            raise UnsupportedPaymentProvider(
+                f"Only LOCAL payment provider is supported, got {provider}"
+            )
         response = await self._transport.request(
             "post",
             "graphql",
