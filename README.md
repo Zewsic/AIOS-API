@@ -111,7 +111,7 @@ async with Playerok() as client:
 ```python
 async with Playerok() as client:
 
-    async for item in client.items.list_self():
+    async for item in client.items.iter_self():
         pos = item.priority_position or 999
         if pos < 15:
             await item.set_premium_priority()
