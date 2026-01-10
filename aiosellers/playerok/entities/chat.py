@@ -11,7 +11,9 @@ from ..schemas import ChatTypes
 
 if TYPE_CHECKING:  # pragma: no cover
     from ..playerok import Playerok
+    from .deal import Deal
     from .file import File
+    from .user import User
 
 
 @dataclass(slots=True)
@@ -66,6 +68,38 @@ class Chat:
     async def get_messages(self, limit: int = 50) -> list[ChatMessage]:
         """Get messages from this chat."""
         return await self._require_client().chats.messages.list(self.id, limit=limit)
+
+    async def get_user(self) -> User | None:
+        """Get the other participant in this chat."""
+        if not self.user_id:
+            return None
+        return await self._require_client().account.get_user(self.user_id)
+
+    async def get_deals(self) -> list[Deal]:
+        """Get all deals associated with this chat."""
+        from .deal import Deal
+
+        client = self._require_client()
+        # Refresh chat schema to get deals
+        schema = await client._raw.chats.get_chat(self.id)
+        if schema is None or not schema.deals:
+            return []
+
+        # Convert schema deals to Deal entities
+        deals = []
+        for deal_schema in schema.deals:
+            deal = Deal(
+                id=deal_schema.id,
+                status=deal_schema.status,
+                user_id=deal_schema.user.id if deal_schema.user else None,
+                chat_id=self.id,
+            )
+            deal._client = client
+            if client._use_identity_map:
+                client._identity_maps.deals.set(deal_schema.id, deal)
+            deals.append(deal)
+
+        return deals
 
     async def refresh(self) -> Chat:
         """Refresh chat data from server."""

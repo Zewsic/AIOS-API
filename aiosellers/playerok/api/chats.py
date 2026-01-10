@@ -136,7 +136,7 @@ class ChatAPI:
                     user_id = u.id
                     # Also push user to identity map
                     if self._client._use_identity_map:
-                        user = self._client.account.get_user(u.id)
+                        await self._client.account.get_user(u.id)
                     break
             if user_id is None:
                 user_id = schema.users[0].id
@@ -164,6 +164,7 @@ class ChatAPI:
         cursor: str | None = None,
         type: ChatTypes | None = None,
         status: ChatStatuses | None = None,
+        user_id: str | None = None,
     ) -> list[Chat]:
         """Get list of chats.
 
@@ -172,6 +173,7 @@ class ChatAPI:
             cursor: Pagination cursor.
             type: Filter by chat type.
             status: Filter by chat status.
+            user_id: Filter results by participant user ID.
 
         Returns:
             List of Chat entities.
@@ -192,22 +194,26 @@ class ChatAPI:
                 break
 
             for schema in response.chats:
-                # Determine user_id
-                user_id = None
+                # Determine user_id from participants
+                chat_user_id = None
                 if schema.users:
                     me_id = self._client._me_id
                     for u in schema.users:
                         if me_id and u.id != me_id:
-                            user_id = u.id
+                            chat_user_id = u.id
                             break
-                    if user_id is None:
-                        user_id = schema.users[0].id
+                    if chat_user_id is None:
+                        chat_user_id = schema.users[0].id
+
+                # Filter by user_id if specified
+                if user_id is not None and chat_user_id != user_id:
+                    continue
 
                 chat = Chat(
                     id=schema.id,
                     type=schema.type,
                     unread_messages_counter=schema.unread_messages_counter,
-                    user_id=user_id,
+                    user_id=chat_user_id,
                 )
                 chat._client = self._client
 
@@ -215,6 +221,11 @@ class ChatAPI:
                     self._client._identity_maps.chats.set(schema.id, chat)
 
                 result.append(chat)
+                if len(result) >= limit:
+                    break
+
+            if len(result) >= limit:
+                break
 
             remain -= len(response.chats)
 
@@ -230,6 +241,7 @@ class ChatAPI:
         cursor: str | None = None,
         type: ChatTypes | None = None,
         status: ChatStatuses | None = None,
+        user_id: str | None = None,
     ) -> AsyncIterator[Chat]:
         """Iterate over all chats.
 
@@ -237,6 +249,7 @@ class ChatAPI:
             cursor: Starting pagination cursor.
             type: Filter by chat type.
             status: Filter by chat status.
+            user_id: Filter results by participant user ID.
 
         Yields:
             Chat entities.
@@ -254,21 +267,26 @@ class ChatAPI:
                 return
 
             for schema in response.chats:
-                user_id = None
+                # Determine user_id from participants
+                chat_user_id = None
                 if schema.users:
                     me_id = self._client._me_id
                     for u in schema.users:
                         if me_id and u.id != me_id:
-                            user_id = u.id
+                            chat_user_id = u.id
                             break
-                    if user_id is None:
-                        user_id = schema.users[0].id
+                    if chat_user_id is None:
+                        chat_user_id = schema.users[0].id
+
+                # Filter by user_id if specified
+                if user_id is not None and chat_user_id != user_id:
+                    continue
 
                 chat = Chat(
                     id=schema.id,
                     type=schema.type,
                     unread_messages_counter=schema.unread_messages_counter,
-                    user_id=user_id,
+                    user_id=chat_user_id,
                 )
                 chat._client = self._client
 

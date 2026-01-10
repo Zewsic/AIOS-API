@@ -31,9 +31,20 @@ async def main() -> None:
         print(f"Found {len(chats)} chats")
 
         for chat in chats:
+            if chat.type != "PM":
+                continue
             print(f"  Chat {chat.id} - Type: {chat.type}")
             if chat.unread_messages_counter:
                 print(f"    Unread: {chat.unread_messages_counter}")
+                unread = await chat.get_messages(chat.unread_messages_counter)
+                for message in unread:
+                    print(f"      Message: {message.text}")
+
+                deals = await chat.get_deals()
+                print(f"    Deals: {len(deals)}")
+                for deal in deals:
+                    print(f"      Deal {deal.id} - Status: {deal.status}")
+        return
 
         # Get specific chat and use entity methods
         if chats:
@@ -91,8 +102,6 @@ async def main() -> None:
 
                         for data_field in await ot.get_data_fields():
                             print(f"          + Data Field: {data_field.name}")
-
-
 
 
 if __name__ == "__main__":

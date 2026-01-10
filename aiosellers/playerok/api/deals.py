@@ -62,6 +62,7 @@ class DealAPI:
         cursor: str | None = None,
         statuses: list[ItemDealStatuses] | None = None,
         direction: ItemDealDirections | None = None,
+        user_id: str | None = None,
     ) -> list[Deal]:
         """Get list of deals.
 
@@ -70,6 +71,7 @@ class DealAPI:
             cursor: Pagination cursor.
             statuses: Filter by deal statuses.
             direction: Filter by deal direction (IN/OUT).
+            user_id: Filter results by user ID.
 
         Returns:
             List of Deal entities.
@@ -90,7 +92,18 @@ class DealAPI:
                 break
 
             for schema in response.deals:
+                deal_user_id = schema.user.id if schema.user else None
+
+                # Filter by user_id if specified
+                if user_id is not None and deal_user_id != user_id:
+                    continue
+
                 result.append(self._create_deal(schema))
+                if len(result) >= limit:
+                    break
+
+            if len(result) >= limit:
+                break
 
             remain -= len(response.deals)
 
@@ -106,6 +119,7 @@ class DealAPI:
         cursor: str | None = None,
         statuses: list[ItemDealStatuses] | None = None,
         direction: ItemDealDirections | None = None,
+        user_id: str | None = None,
     ) -> AsyncIterator[Deal]:
         """Iterate over all deals.
 
@@ -113,6 +127,7 @@ class DealAPI:
             cursor: Starting pagination cursor.
             statuses: Filter by deal statuses.
             direction: Filter by deal direction (IN/OUT).
+            user_id: Filter results by user ID.
 
         Yields:
             Deal entities.
@@ -130,6 +145,12 @@ class DealAPI:
                 return
 
             for schema in response.deals:
+                deal_user_id = schema.user.id if schema.user else None
+
+                # Filter by user_id if specified
+                if user_id is not None and deal_user_id != user_id:
+                    continue
+
                 yield self._create_deal(schema)
 
             if not response.page_info.has_next_page:

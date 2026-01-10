@@ -10,6 +10,7 @@ from ..schemas.enums import ItemDealStatuses
 if TYPE_CHECKING:  # pragma: no cover
     from ..playerok import Playerok
     from .chat import Chat
+    from .user import User
 
 
 @dataclass(slots=True)
@@ -49,6 +50,12 @@ class Deal:
         if not self.chat_id:
             return None
         return await self._require_client().chats.get(self.chat_id)
+
+    async def get_user(self) -> User | None:
+        """Get user associated with this deal."""
+        if not self.user_id:
+            return None
+        return await self._require_client().account.get_user(self.user_id)
 
     async def refresh(self) -> Deal:
         """Refresh deal data from server."""
