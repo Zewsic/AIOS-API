@@ -5,6 +5,9 @@
 
 Asynchronous Python wrapper for working with digital trading platforms. Currently implemented module for **PlayerOK**.
 
+![Python](logo.png)
+
+
 ---
 
 ## Installation

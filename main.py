@@ -19,17 +19,6 @@ async def main() -> None:
         request_timeout=15.0,
     )
 
-    async with Playerok() as client:
-        items = await client.items.list_self(limit=50)
-
-        for item in items:
-            pos = item.priority_position or 999
-            if pos < 15:
-                await item.set_premium_priority()
-                print(f"Upgraded: {item.name}")
-
-    return
-
     async with Playerok(config) as client:
         # Test some features
 
